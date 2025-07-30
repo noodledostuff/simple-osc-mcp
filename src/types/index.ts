@@ -46,9 +46,9 @@ export enum OSCType {
 // ============================================================================
 
 /**
- * Represents an OSC endpoint configuration and status
+ * Represents an OSC endpoint configuration and status information
  */
-export interface OSCEndpoint {
+export interface OSCEndpointInfo {
   /** Unique identifier for the endpoint */
   id: string;
   /** UDP port number the endpoint is listening on */
@@ -173,7 +173,7 @@ export interface MessageQueryResponse {
  */
 export interface EndpointStatusResponse {
   /** Array of endpoint status information */
-  endpoints: OSCEndpoint[];
+  endpoints: OSCEndpointInfo[];
 }
 
 // ============================================================================

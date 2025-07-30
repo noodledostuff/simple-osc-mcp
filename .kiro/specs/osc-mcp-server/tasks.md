@@ -48,8 +48,17 @@
   - Write unit tests for buffer operations and filtering
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 5.1, 5.2, 5.3_
 
-- [ ] 5. Create OSC endpoint management
-- [ ] 5.1 Implement individual OSC endpoint class
+- [x] 5. Create OSC endpoint management
+
+
+
+
+
+- [x] 5.1 Implement individual OSC endpoint class
+
+
+
+
   - Create OSCEndpoint class with UDP socket handling
   - Implement startListening() and stopListening() methods
   - Add message reception and parsing integration
@@ -57,7 +66,9 @@
   - Write unit tests for endpoint lifecycle management
   - _Requirements: 1.1, 1.2, 1.3, 4.1, 4.2_
 
-- [ ] 5.2 Implement OSC manager for multiple endpoints
+- [x] 5.2 Implement OSC manager for multiple endpoints
+
+
   - Create OSCManager class to coordinate multiple endpoints
   - Implement endpoint registry and status tracking
   - Add methods for creating, stopping, and querying endpoints
