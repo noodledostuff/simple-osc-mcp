@@ -10,6 +10,7 @@ import { EventEmitter } from 'events';
 import { OSCEndpointInfo, OSCEndpointConfig, OSCEndpointStatus, OSCMessage, ErrorCode, OSCError, MessageBufferConfig } from '../types/index';
 import { parseOSCMessage } from './parser';
 import { MessageBuffer, createMessageBuffer } from './buffer';
+import { NetworkErrors, EndpointErrors } from '../errors/index';
 
 /**
  * Events emitted by OSCEndpoint
@@ -52,7 +53,8 @@ export class OSCEndpoint extends EventEmitter {
 
     // Validate port range
     if (!this.isValidPort(this.port)) {
-      throw new Error(`Invalid port number: ${this.port}. Must be between 1024 and 65535.`);
+      const error = NetworkErrors.portInvalid(this.port);
+      throw new Error(error.message);
     }
 
     // Create message buffer
@@ -70,7 +72,8 @@ export class OSCEndpoint extends EventEmitter {
    */
   async startListening(): Promise<void> {
     if (this.status === 'active') {
-      throw new Error(`Endpoint ${this.id} is already listening`);
+      const error = EndpointErrors.alreadyActive(this.id);
+      throw new Error(error.message);
     }
 
     return new Promise((resolve, reject) => {
@@ -99,7 +102,8 @@ export class OSCEndpoint extends EventEmitter {
       } catch (error) {
         this.status = 'error';
         this.emit('statusChange', this.status);
-        reject(error);
+        const startError = EndpointErrors.startFailed(this.id, error instanceof Error ? error.message : 'Unknown error');
+        reject(new Error(startError.message));
       }
     });
   }
@@ -229,33 +233,19 @@ export class OSCEndpoint extends EventEmitter {
     this.status = 'error';
     this.emit('statusChange', this.status);
 
-    // Convert Node.js socket errors to OSC errors
+    // Convert Node.js socket errors to OSC errors using error creators
     let oscError: OSCError;
 
     if (error.message.includes('EADDRINUSE')) {
-      oscError = {
-        code: ErrorCode.PORT_IN_USE,
-        message: `Port ${this.port} is already in use`,
-        details: { 
-          port: this.port,
-          suggestedPorts: this.getSuggestedPorts()
-        }
-      };
+      oscError = NetworkErrors.portInUse(this.port, this.getSuggestedPorts());
     } else if (error.message.includes('EACCES')) {
-      oscError = {
-        code: ErrorCode.PERMISSION_DENIED,
-        message: `Permission denied to bind to port ${this.port}`,
-        details: { port: this.port }
-      };
+      oscError = NetworkErrors.permissionDenied(this.port);
     } else {
-      oscError = {
-        code: ErrorCode.NETWORK_ERROR,
-        message: `Network error on endpoint ${this.id}: ${error.message}`,
-        details: { 
-          originalError: error,
-          port: this.port
-        }
-      };
+      oscError = NetworkErrors.networkError(`Network error on endpoint ${this.id}: ${error.message}`, {
+        originalError: error,
+        port: this.port,
+        endpointId: this.id
+      });
     }
 
     this.emit('error', oscError);

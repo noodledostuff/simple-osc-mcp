@@ -463,6 +463,205 @@ describe('OSCMCPServer', () => {
 
         await expect(callToolHandler(request)).rejects.toThrow();
       });
+
+      describe('Parameter Validation Errors', () => {
+        it('should validate create_osc_endpoint parameters', async () => {
+          const invalidRequests = [
+            // Missing port
+            { arguments: {} },
+            // Invalid port type
+            { arguments: { port: 'invalid' } },
+            // Port out of range
+            { arguments: { port: 100 } },
+            // Invalid buffer size
+            { arguments: { port: 8000, bufferSize: 'invalid' } },
+            // Invalid address filters
+            { arguments: { port: 8000, addressFilters: 'invalid' } },
+            // Invalid address pattern in filters
+            { arguments: { port: 8000, addressFilters: ['invalid'] } }
+          ];
+
+          for (const args of invalidRequests) {
+            const request = {
+              params: {
+                name: 'create_osc_endpoint',
+                arguments: args.arguments
+              }
+            };
+
+            await expect(callToolHandler(request)).rejects.toThrow();
+          }
+        });
+
+        it('should validate stop_osc_endpoint parameters', async () => {
+          const invalidRequests = [
+            // Missing endpoint ID
+            { arguments: {} },
+            // Invalid endpoint ID type
+            { arguments: { endpointId: 123 } },
+            // Empty endpoint ID
+            { arguments: { endpointId: '' } }
+          ];
+
+          for (const args of invalidRequests) {
+            const request = {
+              params: {
+                name: 'stop_osc_endpoint',
+                arguments: args.arguments
+              }
+            };
+
+            await expect(callToolHandler(request)).rejects.toThrow();
+          }
+        });
+
+        it('should validate get_osc_messages parameters', async () => {
+          const invalidRequests = [
+            // Invalid endpoint ID type
+            { arguments: { endpointId: 123 } },
+            // Invalid address pattern
+            { arguments: { addressPattern: 'invalid' } },
+            // Invalid time window
+            { arguments: { timeWindowSeconds: 'invalid' } },
+            // Time window out of range
+            { arguments: { timeWindowSeconds: 100000 } },
+            // Invalid limit
+            { arguments: { limit: 'invalid' } },
+            // Limit out of range
+            { arguments: { limit: 2000 } }
+          ];
+
+          for (const args of invalidRequests) {
+            const request = {
+              params: {
+                name: 'get_osc_messages',
+                arguments: args.arguments
+              }
+            };
+
+            await expect(callToolHandler(request)).rejects.toThrow();
+          }
+        });
+
+        it('should validate get_endpoint_status parameters', async () => {
+          const request = {
+            params: {
+              name: 'get_endpoint_status',
+              arguments: { endpointId: 123 } // Invalid type
+            }
+          };
+
+          await expect(callToolHandler(request)).rejects.toThrow();
+        });
+      });
+
+      describe('Network Error Handling', () => {
+        it('should handle port in use errors', async () => {
+          const mockResponse: CreateEndpointResponse = {
+            endpointId: '',
+            port: 8000,
+            status: 'error',
+            message: 'Port 8000 is already in use. Please try a different port.'
+          };
+
+          mockOSCManager.createEndpoint.mockResolvedValue(mockResponse);
+
+          const request = {
+            params: {
+              name: 'create_osc_endpoint',
+              arguments: { port: 8000 }
+            }
+          };
+
+          await expect(callToolHandler(request)).rejects.toThrow();
+        });
+
+        it('should handle permission denied errors', async () => {
+          const mockResponse: CreateEndpointResponse = {
+            endpointId: '',
+            port: 80,
+            status: 'error',
+            message: 'Permission denied to bind to port 80. Try using a port number above 1024 or run with appropriate privileges.'
+          };
+
+          mockOSCManager.createEndpoint.mockResolvedValue(mockResponse);
+
+          const request = {
+            params: {
+              name: 'create_osc_endpoint',
+              arguments: { port: 80 }
+            }
+          };
+
+          await expect(callToolHandler(request)).rejects.toThrow();
+        });
+      });
+
+      describe('Endpoint Error Handling', () => {
+        it('should handle endpoint not found errors', async () => {
+          const mockResponse: StopEndpointResponse = {
+            endpointId: 'nonexistent',
+            message: 'Endpoint \'nonexistent\' not found. Please check the endpoint ID and try again.'
+          };
+
+          mockOSCManager.stopEndpoint.mockResolvedValue(mockResponse);
+
+          const request = {
+            params: {
+              name: 'stop_osc_endpoint',
+              arguments: { endpointId: 'nonexistent' }
+            }
+          };
+
+          const result = await callToolHandler(request);
+          expect(JSON.parse(result.content[0].text)).toEqual(mockResponse);
+        });
+      });
+
+      describe('Operation Error Handling', () => {
+        it('should handle operation failures gracefully', async () => {
+          mockOSCManager.createEndpoint.mockRejectedValue(new Error('Unexpected error'));
+
+          const request = {
+            params: {
+              name: 'create_osc_endpoint',
+              arguments: { port: 8000 }
+            }
+          };
+
+          await expect(callToolHandler(request)).rejects.toThrow();
+        });
+
+        it('should handle OSC manager errors in get_messages', async () => {
+          mockOSCManager.getMessages.mockImplementation(() => {
+            throw new Error('Buffer error');
+          });
+
+          const request = {
+            params: {
+              name: 'get_osc_messages',
+              arguments: {}
+            }
+          };
+
+          await expect(callToolHandler(request)).rejects.toThrow();
+        });
+
+        it('should handle OSC manager errors in get_endpoint_status', async () => {
+          mockOSCManager.getEndpointStatus.mockImplementation(() => {
+            throw new Error('Status error');
+          });
+
+          const request = {
+            params: {
+              name: 'get_endpoint_status',
+              arguments: {}
+            }
+          };
+
+          await expect(callToolHandler(request)).rejects.toThrow();
+        });
+      });
     });
   });
 

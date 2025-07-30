@@ -18,6 +18,7 @@ import {
   MessageQueryResponse,
   EndpointStatusResponse
 } from '../types/index';
+import { NetworkErrors, EndpointErrors, OperationErrors } from '../errors/index';
 
 /**
  * Events emitted by OSCManager
@@ -47,11 +48,12 @@ export class OSCManager extends EventEmitter {
       // Validate port availability by checking existing endpoints
       const existingEndpoint = this.findEndpointByPort(config.port);
       if (existingEndpoint && existingEndpoint.isActive()) {
+        const error = NetworkErrors.portInUse(config.port, this.getSuggestedPorts(config.port));
         return {
           endpointId: '',
           port: config.port,
           status: 'error',
-          message: `Port ${config.port} is already in use by endpoint ${existingEndpoint.getId()}`
+          message: error.message
         };
       }
 
@@ -82,12 +84,41 @@ export class OSCManager extends EventEmitter {
       };
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      // Handle specific error types
+      if (error instanceof Error) {
+        if (error.message.includes('EADDRINUSE')) {
+          const networkError = NetworkErrors.portInUse(config.port, this.getSuggestedPorts(config.port));
+          return {
+            endpointId: '',
+            port: config.port,
+            status: 'error',
+            message: networkError.message
+          };
+        } else if (error.message.includes('EACCES')) {
+          const networkError = NetworkErrors.permissionDenied(config.port);
+          return {
+            endpointId: '',
+            port: config.port,
+            status: 'error',
+            message: networkError.message
+          };
+        } else if (error.message.includes('Invalid port')) {
+          const networkError = NetworkErrors.portInvalid(config.port);
+          return {
+            endpointId: '',
+            port: config.port,
+            status: 'error',
+            message: networkError.message
+          };
+        }
+      }
+
+      const operationError = OperationErrors.operationFailed('createEndpoint', error instanceof Error ? error.message : 'Unknown error');
       return {
         endpointId: '',
         port: config.port,
         status: 'error',
-        message: `Failed to create OSC endpoint: ${errorMessage}`
+        message: operationError.message
       };
     }
   }
@@ -102,13 +133,23 @@ export class OSCManager extends EventEmitter {
     const endpoint = this.endpoints.get(endpointId);
     
     if (!endpoint) {
+      const error = EndpointErrors.notFound(endpointId);
       return {
         endpointId,
-        message: `Endpoint ${endpointId} not found`
+        message: error.message
       };
     }
 
     try {
+      // Check if endpoint is already stopped
+      if (!endpoint.isActive()) {
+        const error = EndpointErrors.alreadyStopped(endpointId);
+        return {
+          endpointId,
+          message: error.message
+        };
+      }
+
       // Stop the endpoint
       await endpoint.stopListening();
       
@@ -124,10 +165,10 @@ export class OSCManager extends EventEmitter {
       };
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const operationError = OperationErrors.operationFailed('stopEndpoint', error instanceof Error ? error.message : 'Unknown error');
       return {
         endpointId,
-        message: `Failed to stop endpoint ${endpointId}: ${errorMessage}`
+        message: operationError.message
       };
     }
   }
@@ -299,6 +340,28 @@ export class OSCManager extends EventEmitter {
     const id = `endpoint-${this.nextEndpointId}`;
     this.nextEndpointId++;
     return id;
+  }
+
+  /**
+   * Gets suggested alternative ports when a port is in use
+   * 
+   * @param requestedPort The port that was requested
+   * @returns Array of suggested available ports
+   */
+  private getSuggestedPorts(requestedPort: number): number[] {
+    const suggestions: number[] = [];
+    const usedPorts = this.getUsedPorts();
+    
+    // Suggest next 3 available ports starting from requested port + 1
+    let candidate = requestedPort + 1;
+    while (suggestions.length < 3 && candidate <= 65535) {
+      if (!usedPorts.includes(candidate)) {
+        suggestions.push(candidate);
+      }
+      candidate++;
+    }
+    
+    return suggestions;
   }
 
   /**

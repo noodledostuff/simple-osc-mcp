@@ -25,6 +25,8 @@ import {
   EndpointStatusResponse,
   MessageQuery,
 } from './types/index';
+import { ParameterValidator } from './errors/validation';
+import { OperationErrors } from './errors/index';
 
 /**
  * MCP Server for OSC endpoint management with full VSCode compatibility
@@ -258,10 +260,12 @@ export class OSCMCPServer {
    */
   private async handleCreateEndpoint(params: CreateEndpointParams) {
     // Validate parameters
-    if (!params.port || params.port < 1024 || params.port > 65535) {
+    const validation = ParameterValidator.validateCreateEndpoint(params);
+    if (!validation.isValid) {
       throw new McpError(
         ErrorCode.InvalidParams,
-        'Port must be between 1024 and 65535'
+        validation.error!.message,
+        validation.error!.details
       );
     }
 
@@ -271,93 +275,172 @@ export class OSCMCPServer {
       addressFilters: params.addressFilters || [],
     };
 
-    const response: CreateEndpointResponse = await this.oscManager.createEndpoint(config);
+    try {
+      const response: CreateEndpointResponse = await this.oscManager.createEndpoint(config);
 
-    if (response.status === 'error') {
+      if (response.status === 'error') {
+        throw new McpError(
+          ErrorCode.InternalError,
+          response.message
+        );
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(response, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      if (error instanceof McpError) {
+        throw error;
+      }
+      
+      const oscError = OperationErrors.operationFailed(
+        'create_osc_endpoint',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+      
       throw new McpError(
         ErrorCode.InternalError,
-        response.message
+        oscError.message,
+        oscError.details
       );
     }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(response, null, 2),
-        },
-      ],
-    };
   }
 
   /**
    * Handles stop_osc_endpoint tool calls
    */
   private async handleStopEndpoint(params: StopEndpointParams) {
-    if (!params.endpointId) {
+    // Validate parameters
+    const validation = ParameterValidator.validateStopEndpoint(params);
+    if (!validation.isValid) {
       throw new McpError(
         ErrorCode.InvalidParams,
-        'endpointId is required'
+        validation.error!.message,
+        validation.error!.details
       );
     }
 
-    const response: StopEndpointResponse = await this.oscManager.stopEndpoint(params.endpointId);
+    try {
+      const response: StopEndpointResponse = await this.oscManager.stopEndpoint(params.endpointId);
 
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(response, null, 2),
-        },
-      ],
-    };
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(response, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      const oscError = OperationErrors.operationFailed(
+        'stop_osc_endpoint',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+      
+      throw new McpError(
+        ErrorCode.InternalError,
+        oscError.message,
+        oscError.details
+      );
+    }
   }
 
   /**
    * Handles get_osc_messages tool calls
    */
   private async handleGetMessages(params: GetMessagesParams) {
-    // Build query from parameters
-    const query: MessageQuery = {};
-
-    if (params.addressPattern) {
-      query.addressPattern = params.addressPattern;
+    // Validate parameters
+    const validation = ParameterValidator.validateGetMessages(params);
+    if (!validation.isValid) {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        validation.error!.message,
+        validation.error!.details
+      );
     }
 
-    if (params.timeWindowSeconds) {
-      query.since = new Date(Date.now() - (params.timeWindowSeconds * 1000));
+    try {
+      // Build query from parameters
+      const query: MessageQuery = {};
+
+      if (params.addressPattern) {
+        query.addressPattern = params.addressPattern;
+      }
+
+      if (params.timeWindowSeconds) {
+        query.since = new Date(Date.now() - (params.timeWindowSeconds * 1000));
+      }
+
+      if (params.limit) {
+        query.limit = params.limit;
+      }
+
+      const response: MessageQueryResponse = this.oscManager.getMessages(params.endpointId, query);
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(response, this.dateReplacer, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      const oscError = OperationErrors.operationFailed(
+        'get_osc_messages',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+      
+      throw new McpError(
+        ErrorCode.InternalError,
+        oscError.message,
+        oscError.details
+      );
     }
-
-    if (params.limit) {
-      query.limit = params.limit;
-    }
-
-    const response: MessageQueryResponse = this.oscManager.getMessages(params.endpointId, query);
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(response, this.dateReplacer, 2),
-        },
-      ],
-    };
   }
 
   /**
    * Handles get_endpoint_status tool calls
    */
   private async handleGetEndpointStatus(params: GetEndpointStatusParams) {
-    const response: EndpointStatusResponse = this.oscManager.getEndpointStatus(params.endpointId);
+    // Validate parameters
+    const validation = ParameterValidator.validateGetEndpointStatus(params);
+    if (!validation.isValid) {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        validation.error!.message,
+        validation.error!.details
+      );
+    }
 
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify(response, this.dateReplacer, 2),
-        },
-      ],
-    };
+    try {
+      const response: EndpointStatusResponse = this.oscManager.getEndpointStatus(params.endpointId);
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(response, this.dateReplacer, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      const oscError = OperationErrors.operationFailed(
+        'get_endpoint_status',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+      
+      throw new McpError(
+        ErrorCode.InternalError,
+        oscError.message,
+        oscError.details
+      );
+    }
   }
 
   /**
