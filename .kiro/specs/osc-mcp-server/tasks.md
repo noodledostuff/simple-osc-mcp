@@ -35,7 +35,12 @@
   - Write unit tests for parser with various OSC message formats
   - _Requirements: 2.1, 2.2, 2.4_
 
-- [ ] 4. Implement message buffer system
+- [x] 4. Implement message buffer system
+
+
+
+
+
   - Create circular buffer for storing OSC messages with timestamps
   - Implement message filtering by OSC address patterns
   - Add methods for querying messages with time windows and limits
