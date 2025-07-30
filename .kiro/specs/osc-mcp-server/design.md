@@ -6,6 +6,8 @@ The OSC MCP Server is a Model Context Protocol server that provides AI agents wi
 
 The system follows a modular architecture with clear separation between MCP protocol handling, OSC message processing, and endpoint management. It uses Node.js with TypeScript and async/await patterns for concurrent handling of multiple OSC endpoints and MCP client connections. The server will be packaged as an npm package for easy distribution via npx.
 
+**VSCode Integration**: The server is specifically designed to be fully compatible with VSCode's MCP client implementation, supporting stdio transport as the primary communication method and adhering to VSCode's expected MCP protocol patterns for seamless integration within the development environment.
+
 ### Package Structure
 ```
 osc-mcp-server/
@@ -91,13 +93,21 @@ graph TB
 
 ### MCP Server Component
 
-**Purpose**: Implements the MCP server protocol and exposes OSC tools to agents.
+**Purpose**: Implements the MCP server protocol and exposes OSC tools to agents with full VSCode compatibility.
 
 **Key Methods**:
-- `handleInitialize()`: Initialize MCP server capabilities
-- `handleListTools()`: Return available OSC tools
-- `handleCallTool()`: Execute OSC tool requests
+- `handleInitialize()`: Initialize MCP server capabilities with VSCode-compatible response format
+- `handleListTools()`: Return available OSC tools in MCP-compliant format
+- `handleCallTool()`: Execute OSC tool requests with proper error handling for VSCode
 - `handleShutdown()`: Clean up resources on server shutdown
+- `handleStdioTransport()`: Manage stdio-based communication for VSCode integration
+
+**VSCode Compatibility Features**:
+- Stdio transport support as primary communication method
+- MCP protocol compliance for proper VSCode integration
+- Graceful connection lifecycle management for VSCode disconnects/reconnects
+- Structured error responses that VSCode can display appropriately
+- Server capability advertisement compatible with VSCode's MCP client
 
 **Tools Exposed**:
 - `create_osc_endpoint`: Create new OSC listening endpoint
@@ -246,6 +256,22 @@ interface MessageQueryResponse {
     }
 }
 ```
+
+### VSCode MCP Integration
+
+**Transport Layer**: The server uses stdio transport for communication with VSCode's MCP client, handling JSON-RPC messages over standard input/output streams.
+
+**Protocol Compliance**: Full adherence to MCP specification ensures proper integration:
+- Correct initialization handshake with capability advertisement
+- Proper tool registration and metadata formatting
+- Standard error codes and response structures
+- Graceful handling of connection lifecycle events
+
+**Connection Management**: Robust handling of VSCode-specific connection patterns:
+- Automatic reconnection support without data loss
+- Proper cleanup of OSC endpoints during disconnections
+- State preservation across VSCode restarts
+- Logging compatible with VSCode's output channels
 
 ## Testing Strategy
 

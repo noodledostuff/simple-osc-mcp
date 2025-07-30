@@ -51,21 +51,25 @@
   - Write unit tests for manager operations
   - _Requirements: 1.4, 4.3, 4.4_
 
-- [ ] 6. Implement MCP server protocol handler
+- [ ] 6. Implement MCP server protocol handler with VSCode compatibility
   - Create MCP server class implementing the protocol specification
   - Implement handleInitialize(), handleListTools(), and handleCallTool()
   - Register OSC tools: create_osc_endpoint, stop_osc_endpoint, get_osc_messages, get_endpoint_status
-  - Add proper error handling and response formatting
-  - Write unit tests for MCP protocol handling
-  - _Requirements: 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 3.1, 3.2, 4.1, 4.2, 4.3_
+  - Add stdio transport support for VSCode integration
+  - Implement proper MCP-compliant error responses for VSCode display
+  - Add server capability advertisement compatible with VSCode's MCP client
+  - Write unit tests for MCP protocol handling and VSCode compatibility
+  - _Requirements: 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 3.1, 3.2, 4.1, 4.2, 4.3, 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 7. Create CLI entry point and server startup
+- [ ] 7. Create CLI entry point and server startup with VSCode support
   - Implement main CLI script for npx execution
   - Add command-line argument parsing for server configuration
   - Integrate MCP server with OSC manager
-  - Handle graceful shutdown and resource cleanup
-  - Write integration tests for complete server startup
-  - _Requirements: 4.4, 6.1_
+  - Implement stdio transport handling for VSCode communication
+  - Handle graceful shutdown and resource cleanup with connection lifecycle management
+  - Add VSCode-specific logging and error reporting
+  - Write integration tests for complete server startup and VSCode compatibility
+  - _Requirements: 4.4, 6.1, 7.5, 7.6_
 
 - [ ] 8. Add comprehensive error handling
   - Implement structured error responses for all failure cases
@@ -97,9 +101,19 @@
   - Add troubleshooting guide for common issues
   - _Requirements: 6.1_
 
-- [ ] 12. Final integration and testing
-  - Perform end-to-end testing with real MCP clients
+- [ ] 12. VSCode integration testing and validation
+  - Test server configuration in VSCode's MCP settings
+  - Verify proper connection establishment and server listing in VSCode
+  - Test all MCP tools through VSCode's interface
+  - Validate error handling and display in VSCode environment
+  - Test connection lifecycle management (disconnect/reconnect scenarios)
+  - Verify stdio transport communication works correctly
+  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
+
+- [ ] 13. Final integration and testing
+  - Perform end-to-end testing with real MCP clients including VSCode
   - Test npx installation and execution
   - Verify all requirements are met through automated tests
   - Conduct performance testing with high-frequency OSC messages
-  - _Requirements: 1.1, 2.1, 3.1, 4.1, 6.1_
+  - Test complete VSCode workflow from configuration to OSC message handling
+  - _Requirements: 1.1, 2.1, 3.1, 4.1, 6.1, 7.1_
