@@ -37,12 +37,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/username/osc-mcp-server.git"
+    "url": "git+https://github.com/noodledostuff/simple-osc-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/username/osc-mcp-server/issues"
+    "url": "https://github.com/noodledostuff/simple-osc-mcp/issues"
   },
-  "homepage": "https://github.com/username/osc-mcp-server#readme",
+  "homepage": "https://github.com/noodledostuff/simple-osc-mcp#readme",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
