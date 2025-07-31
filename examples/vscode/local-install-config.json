@@ -1,0 +1,10 @@
+{
+  "mcp.servers": {
+    "osc-server": {
+      "command": "node",
+      "args": ["./node_modules/osc-mcp-server/dist/index.js"],
+      "env": {},
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}

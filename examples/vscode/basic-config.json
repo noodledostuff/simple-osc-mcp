@@ -1,0 +1,9 @@
+{
+  "mcp.servers": {
+    "osc-server": {
+      "command": "npx",
+      "args": ["osc-mcp-server"],
+      "env": {}
+    }
+  }
+}

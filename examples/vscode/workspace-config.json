@@ -1,0 +1,14 @@
+{
+  "mcp.servers": {
+    "osc-server": {
+      "command": "npx",
+      "args": ["osc-mcp-server"],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    }
+  },
+  "mcp.logging": {
+    "level": "info"
+  }
+}
