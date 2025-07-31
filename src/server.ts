@@ -37,12 +37,10 @@ export class OSCMCPServer {
   private isRunning = false;
 
   constructor() {
-    this.server = new Server(
-      {
-        name: 'osc-mcp-server',
-        version: '1.0.0',
-      }
-    );
+    this.server = new Server({
+      name: 'osc-mcp-server',
+      version: '1.0.0',
+    });
 
     this.oscManager = createOSCManager();
     this.setupToolHandlers();
@@ -60,10 +58,10 @@ export class OSCMCPServer {
     try {
       // Create stdio transport for VSCode integration
       const transport = new StdioServerTransport();
-      
+
       // Connect server to transport
       await this.server.connect(transport);
-      
+
       this.isRunning = true;
       console.error('OSC MCP Server started successfully'); // Use stderr for logging to avoid interfering with stdio transport
     } catch (error) {
@@ -83,10 +81,10 @@ export class OSCMCPServer {
     try {
       // Stop all OSC endpoints first
       await this.oscManager.shutdown();
-      
+
       // Close MCP server
       await this.server.close();
-      
+
       console.error('OSC MCP Server shut down successfully');
     } catch (error) {
       console.error('Error during server shutdown:', error);
@@ -156,7 +154,8 @@ export class OSCMCPServer {
               properties: {
                 endpointId: {
                   type: 'string',
-                  description: 'Optional endpoint ID to query (if not provided, queries all endpoints)',
+                  description:
+                    'Optional endpoint ID to query (if not provided, queries all endpoints)',
                 },
                 addressPattern: {
                   type: 'string',
@@ -196,7 +195,7 @@ export class OSCMCPServer {
     });
 
     // Register call tool handler
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async request => {
       const { name, arguments: args } = request.params;
 
       try {
@@ -214,10 +213,7 @@ export class OSCMCPServer {
             return await this.handleGetEndpointStatus(args as unknown as GetEndpointStatusParams);
 
           default:
-            throw new McpError(
-              ErrorCode.MethodNotFound,
-              `Unknown tool: ${name}`
-            );
+            throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
         }
       } catch (error) {
         if (error instanceof McpError) {
@@ -226,10 +222,7 @@ export class OSCMCPServer {
 
         // Convert other errors to MCP errors for proper VSCode display
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        throw new McpError(
-          ErrorCode.InternalError,
-          `Tool execution failed: ${errorMessage}`
-        );
+        throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${errorMessage}`);
       }
     });
   }
@@ -238,11 +231,11 @@ export class OSCMCPServer {
    * Sets up event handlers for OSC manager events
    */
   private setupEventHandlers(): void {
-    this.oscManager.on('endpointCreated', (endpointInfo) => {
+    this.oscManager.on('endpointCreated', endpointInfo => {
       console.error(`Endpoint created: ${endpointInfo.id} on port ${endpointInfo.port}`);
     });
 
-    this.oscManager.on('endpointStopped', (endpointId) => {
+    this.oscManager.on('endpointStopped', endpointId => {
       console.error(`Endpoint stopped: ${endpointId}`);
     });
 
@@ -279,10 +272,7 @@ export class OSCMCPServer {
       const response: CreateEndpointResponse = await this.oscManager.createEndpoint(config);
 
       if (response.status === 'error') {
-        throw new McpError(
-          ErrorCode.InternalError,
-          response.message
-        );
+        throw new McpError(ErrorCode.InternalError, response.message);
       }
 
       return {
@@ -297,17 +287,13 @@ export class OSCMCPServer {
       if (error instanceof McpError) {
         throw error;
       }
-      
+
       const oscError = OperationErrors.operationFailed(
         'create_osc_endpoint',
         error instanceof Error ? error.message : 'Unknown error'
       );
-      
-      throw new McpError(
-        ErrorCode.InternalError,
-        oscError.message,
-        oscError.details
-      );
+
+      throw new McpError(ErrorCode.InternalError, oscError.message, oscError.details);
     }
   }
 
@@ -341,12 +327,8 @@ export class OSCMCPServer {
         'stop_osc_endpoint',
         error instanceof Error ? error.message : 'Unknown error'
       );
-      
-      throw new McpError(
-        ErrorCode.InternalError,
-        oscError.message,
-        oscError.details
-      );
+
+      throw new McpError(ErrorCode.InternalError, oscError.message, oscError.details);
     }
   }
 
@@ -373,7 +355,7 @@ export class OSCMCPServer {
       }
 
       if (params.timeWindowSeconds) {
-        query.since = new Date(Date.now() - (params.timeWindowSeconds * 1000));
+        query.since = new Date(Date.now() - params.timeWindowSeconds * 1000);
       }
 
       if (params.limit) {
@@ -395,12 +377,8 @@ export class OSCMCPServer {
         'get_osc_messages',
         error instanceof Error ? error.message : 'Unknown error'
       );
-      
-      throw new McpError(
-        ErrorCode.InternalError,
-        oscError.message,
-        oscError.details
-      );
+
+      throw new McpError(ErrorCode.InternalError, oscError.message, oscError.details);
     }
   }
 
@@ -434,12 +412,8 @@ export class OSCMCPServer {
         'get_endpoint_status',
         error instanceof Error ? error.message : 'Unknown error'
       );
-      
-      throw new McpError(
-        ErrorCode.InternalError,
-        oscError.message,
-        oscError.details
-      );
+
+      throw new McpError(ErrorCode.InternalError, oscError.message, oscError.details);
     }
   }
 

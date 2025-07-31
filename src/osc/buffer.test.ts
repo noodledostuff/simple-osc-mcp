@@ -19,7 +19,7 @@ function createTestMessage(
     typeTags: 'f'.repeat(args.length),
     arguments: args,
     sourceIp,
-    sourcePort
+    sourcePort,
   };
 }
 
@@ -30,7 +30,7 @@ describe('MessageBuffer', () => {
   beforeEach(() => {
     config = {
       maxSize: 5,
-      addressFilters: []
+      addressFilters: [],
     };
     buffer = new MessageBuffer(config);
   });
@@ -52,7 +52,7 @@ describe('MessageBuffer', () => {
     it('should add messages to buffer', () => {
       const message = createTestMessage('/test');
       buffer.addMessage(message);
-      
+
       expect(buffer.getMessageCount()).toBe(1);
       expect(buffer.getTotalMessagesReceived()).toBe(1);
     });
@@ -67,10 +67,10 @@ describe('MessageBuffer', () => {
       // Add one more message (should overflow)
       const overflowMessage = createTestMessage('/overflow');
       buffer.addMessage(overflowMessage);
-      
+
       expect(buffer.getMessageCount()).toBe(5); // Still at max capacity
       expect(buffer.getTotalMessagesReceived()).toBe(6); // But total count increased
-      
+
       // Check that newest message is in buffer
       const messages = buffer.getMessages();
       expect(messages.some(m => m.address === '/overflow')).toBe(true);
@@ -79,13 +79,13 @@ describe('MessageBuffer', () => {
     it('should apply address filters when configured', () => {
       const filteredBuffer = new MessageBuffer({
         maxSize: 10,
-        addressFilters: ['/synth/*', '/drum/*']
+        addressFilters: ['/synth/*', '/drum/*'],
       });
 
       // These should be added
       filteredBuffer.addMessage(createTestMessage('/synth/freq'));
       filteredBuffer.addMessage(createTestMessage('/drum/kick'));
-      
+
       // This should be filtered out
       filteredBuffer.addMessage(createTestMessage('/other/param'));
 
@@ -146,7 +146,7 @@ describe('MessageBuffer', () => {
       const messages = buffer.getMessages({
         addressPattern: '/test*',
         since,
-        limit: 1
+        limit: 1,
       });
       expect(messages).toHaveLength(1);
       expect(messages[0]?.address).toBe('/test3');
@@ -212,9 +212,9 @@ describe('MessageBuffer', () => {
     it('should clear all messages', () => {
       buffer.addMessage(createTestMessage('/test1'));
       buffer.addMessage(createTestMessage('/test2'));
-      
+
       buffer.clear();
-      
+
       expect(buffer.getMessageCount()).toBe(0);
       expect(buffer.getTotalMessagesReceived()).toBe(0);
     });
@@ -236,9 +236,9 @@ describe('MessageBuffer', () => {
 
       // Shrink buffer to size 3
       buffer.updateConfig({ maxSize: 3 });
-      
+
       expect(buffer.getMessageCount()).toBe(3);
-      
+
       // Should keep the 3 newest messages
       const messages = buffer.getMessages();
       expect(messages[0]?.address).toBe('/test4'); // newest
@@ -249,9 +249,9 @@ describe('MessageBuffer', () => {
     it('should handle growing buffer size', () => {
       buffer.addMessage(createTestMessage('/test1'));
       buffer.addMessage(createTestMessage('/test2'));
-      
+
       buffer.updateConfig({ maxSize: 10 });
-      
+
       expect(buffer.getMessageCount()).toBe(2);
       expect(buffer.getConfig().maxSize).toBe(10);
     });
@@ -261,12 +261,12 @@ describe('MessageBuffer', () => {
     it('should create buffer with specified configuration', () => {
       const config: MessageBufferConfig = {
         maxSize: 100,
-        addressFilters: ['/test/*']
+        addressFilters: ['/test/*'],
       };
-      
+
       const newBuffer = createMessageBuffer(config);
       const bufferConfig = newBuffer.getConfig();
-      
+
       expect(bufferConfig.maxSize).toBe(100);
       expect(bufferConfig.addressFilters).toEqual(['/test/*']);
     });
@@ -281,16 +281,16 @@ describe('MessageBuffer', () => {
 
     it('should handle invalid time windows', () => {
       buffer.addMessage(createTestMessage('/test'));
-      
+
       // Future timestamp for 'since'
-      const futureMessages = buffer.getMessages({ 
-        since: new Date(Date.now() + 1000) 
+      const futureMessages = buffer.getMessages({
+        since: new Date(Date.now() + 1000),
       });
       expect(futureMessages).toHaveLength(0);
-      
+
       // Past timestamp for 'until'
-      const pastMessages = buffer.getMessages({ 
-        until: new Date(Date.now() - 1000) 
+      const pastMessages = buffer.getMessages({
+        until: new Date(Date.now() - 1000),
       });
       expect(pastMessages).toHaveLength(0);
     });
@@ -298,10 +298,10 @@ describe('MessageBuffer', () => {
     it('should handle zero or negative limits', () => {
       buffer.addMessage(createTestMessage('/test1'));
       buffer.addMessage(createTestMessage('/test2'));
-      
+
       const zeroLimit = buffer.getMessages({ limit: 0 });
       expect(zeroLimit).toHaveLength(0);
-      
+
       const negativeLimit = buffer.getMessages({ limit: -1 });
       expect(negativeLimit).toHaveLength(2); // Should ignore negative limit
     });

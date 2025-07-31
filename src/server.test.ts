@@ -1,26 +1,26 @@
 /**
  * Unit tests for OSC MCP Server
- * 
+ *
  * Tests MCP protocol handling, tool registration, and VSCode compatibility
  */
 
 import { OSCMCPServer } from './server';
 import { OSCManager } from './osc/manager';
-import { 
-  CreateEndpointResponse, 
-  StopEndpointResponse, 
-  MessageQueryResponse, 
+import {
+  CreateEndpointResponse,
+  StopEndpointResponse,
+  MessageQueryResponse,
   EndpointStatusResponse,
   OSCMessage,
-  OSCEndpointInfo
+  OSCEndpointInfo,
 } from './types/index';
 
 // Mock the MCP SDK
 jest.mock('@modelcontextprotocol/sdk/server/index.js', () => ({
-  Server: jest.fn()
+  Server: jest.fn(),
 }));
 jest.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
-  StdioServerTransport: jest.fn()
+  StdioServerTransport: jest.fn(),
 }));
 jest.mock('@modelcontextprotocol/sdk/types.js', () => ({
   CallToolRequestSchema: { method: 'tools/call' },
@@ -28,13 +28,16 @@ jest.mock('@modelcontextprotocol/sdk/types.js', () => ({
   ErrorCode: {
     InvalidParams: 'InvalidParams',
     InternalError: 'InternalError',
-    MethodNotFound: 'MethodNotFound'
+    MethodNotFound: 'MethodNotFound',
   },
   McpError: class McpError extends Error {
-    constructor(public code: string, message: string) {
+    constructor(
+      public code: string,
+      message: string
+    ) {
       super(message);
     }
-  }
+  },
 }));
 jest.mock('./osc/manager');
 
@@ -83,13 +86,11 @@ describe('OSCMCPServer', () => {
   describe('Constructor', () => {
     it('should initialize MCP server with correct configuration', () => {
       const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
-      
-      expect(Server).toHaveBeenCalledWith(
-        {
-          name: 'osc-mcp-server',
-          version: '1.0.0',
-        }
-      );
+
+      expect(Server).toHaveBeenCalledWith({
+        name: 'osc-mcp-server',
+        version: '1.0.0',
+      });
     });
 
     it('should create OSC manager instance', () => {
@@ -128,7 +129,9 @@ describe('OSCMCPServer', () => {
         const error = new Error('Connection failed');
         mockMCPServer.connect.mockRejectedValue(error);
 
-        await expect(server.start()).rejects.toThrow('Failed to start MCP server: Connection failed');
+        await expect(server.start()).rejects.toThrow(
+          'Failed to start MCP server: Connection failed'
+        );
       });
     });
 
@@ -151,13 +154,13 @@ describe('OSCMCPServer', () => {
 
       it('should handle shutdown errors gracefully', async () => {
         await server.start();
-        
+
         const error = new Error('Shutdown failed');
         mockOSCManager.shutdown.mockRejectedValue(error);
 
         // Should not throw, but handle error gracefully
         await server.shutdown();
-        
+
         // Server should still be marked as not running even if shutdown had errors
         expect(server.isServerRunning()).toBe(false);
       });
@@ -178,7 +181,7 @@ describe('OSCMCPServer', () => {
       const result = await listToolsHandler();
 
       expect(result.tools).toHaveLength(4);
-      
+
       const toolNames = result.tools.map((tool: any) => tool.name);
       expect(toolNames).toContain('create_osc_endpoint');
       expect(toolNames).toContain('stop_osc_endpoint');
@@ -188,8 +191,10 @@ describe('OSCMCPServer', () => {
 
     it('should provide proper tool schemas', async () => {
       const result = await listToolsHandler();
-      
-      const createEndpointTool = result.tools.find((tool: any) => tool.name === 'create_osc_endpoint');
+
+      const createEndpointTool = result.tools.find(
+        (tool: any) => tool.name === 'create_osc_endpoint'
+      );
       expect(createEndpointTool.inputSchema.properties.port).toBeDefined();
       expect(createEndpointTool.inputSchema.properties.port.minimum).toBe(1024);
       expect(createEndpointTool.inputSchema.properties.port.maximum).toBe(65535);
@@ -213,7 +218,7 @@ describe('OSCMCPServer', () => {
           endpointId: 'endpoint-1',
           port: 8000,
           status: 'active',
-          message: 'OSC endpoint created successfully on port 8000'
+          message: 'OSC endpoint created successfully on port 8000',
         };
 
         mockOSCManager.createEndpoint.mockResolvedValue(mockResponse);
@@ -224,9 +229,9 @@ describe('OSCMCPServer', () => {
             arguments: {
               port: 8000,
               bufferSize: 1000,
-              addressFilters: ['/synth/*']
-            }
-          }
+              addressFilters: ['/synth/*'],
+            },
+          },
         };
 
         const result = await callToolHandler(request);
@@ -234,7 +239,7 @@ describe('OSCMCPServer', () => {
         expect(mockOSCManager.createEndpoint).toHaveBeenCalledWith({
           port: 8000,
           bufferSize: 1000,
-          addressFilters: ['/synth/*']
+          addressFilters: ['/synth/*'],
         });
 
         expect(result.content[0].type).toBe('text');
@@ -246,9 +251,9 @@ describe('OSCMCPServer', () => {
           params: {
             name: 'create_osc_endpoint',
             arguments: {
-              port: 500 // Invalid port
-            }
-          }
+              port: 500, // Invalid port
+            },
+          },
         };
 
         await expect(callToolHandler(request)).rejects.toThrow();
@@ -259,7 +264,7 @@ describe('OSCMCPServer', () => {
           endpointId: '',
           port: 8000,
           status: 'error',
-          message: 'Port 8000 is already in use'
+          message: 'Port 8000 is already in use',
         };
 
         mockOSCManager.createEndpoint.mockResolvedValue(mockResponse);
@@ -267,8 +272,8 @@ describe('OSCMCPServer', () => {
         const request = {
           params: {
             name: 'create_osc_endpoint',
-            arguments: { port: 8000 }
-          }
+            arguments: { port: 8000 },
+          },
         };
 
         await expect(callToolHandler(request)).rejects.toThrow();
@@ -279,7 +284,7 @@ describe('OSCMCPServer', () => {
       it('should stop endpoint successfully', async () => {
         const mockResponse: StopEndpointResponse = {
           endpointId: 'endpoint-1',
-          message: 'Endpoint endpoint-1 stopped successfully'
+          message: 'Endpoint endpoint-1 stopped successfully',
         };
 
         mockOSCManager.stopEndpoint.mockResolvedValue(mockResponse);
@@ -287,8 +292,8 @@ describe('OSCMCPServer', () => {
         const request = {
           params: {
             name: 'stop_osc_endpoint',
-            arguments: { endpointId: 'endpoint-1' }
-          }
+            arguments: { endpointId: 'endpoint-1' },
+          },
         };
 
         const result = await callToolHandler(request);
@@ -301,8 +306,8 @@ describe('OSCMCPServer', () => {
         const request = {
           params: {
             name: 'stop_osc_endpoint',
-            arguments: {} // Missing endpointId
-          }
+            arguments: {}, // Missing endpointId
+          },
         };
 
         await expect(callToolHandler(request)).rejects.toThrow();
@@ -318,8 +323,8 @@ describe('OSCMCPServer', () => {
             typeTags: 'f',
             arguments: [440.0],
             sourceIp: '192.168.1.100',
-            sourcePort: 57120
-          }
+            sourcePort: 57120,
+          },
         ];
 
         const expectedResponse = {
@@ -330,17 +335,17 @@ describe('OSCMCPServer', () => {
               typeTags: 'f',
               arguments: [440.0],
               sourceIp: '192.168.1.100',
-              sourcePort: 57120
-            }
+              sourcePort: 57120,
+            },
           ],
           totalCount: 1,
-          filteredCount: 1
+          filteredCount: 1,
         };
 
         const mockResponse: MessageQueryResponse = {
           messages: mockMessages,
           totalCount: 1,
-          filteredCount: 1
+          filteredCount: 1,
         };
 
         mockOSCManager.getMessages.mockReturnValue(mockResponse);
@@ -352,9 +357,9 @@ describe('OSCMCPServer', () => {
               endpointId: 'endpoint-1',
               addressPattern: '/synth/*',
               timeWindowSeconds: 60,
-              limit: 10
-            }
-          }
+              limit: 10,
+            },
+          },
         };
 
         const result = await callToolHandler(request);
@@ -362,7 +367,7 @@ describe('OSCMCPServer', () => {
         expect(mockOSCManager.getMessages).toHaveBeenCalledWith('endpoint-1', {
           addressPattern: '/synth/*',
           since: expect.any(Date),
-          limit: 10
+          limit: 10,
         });
 
         expect(JSON.parse(result.content[0].text)).toEqual(expectedResponse);
@@ -372,7 +377,7 @@ describe('OSCMCPServer', () => {
         const mockResponse: MessageQueryResponse = {
           messages: [],
           totalCount: 0,
-          filteredCount: 0
+          filteredCount: 0,
         };
 
         mockOSCManager.getMessages.mockReturnValue(mockResponse);
@@ -380,8 +385,8 @@ describe('OSCMCPServer', () => {
         const request = {
           params: {
             name: 'get_osc_messages',
-            arguments: {}
-          }
+            arguments: {},
+          },
         };
 
         const result = await callToolHandler(request);
@@ -401,12 +406,12 @@ describe('OSCMCPServer', () => {
             bufferSize: 1000,
             addressFilters: [],
             createdAt: new Date('2024-01-01T12:00:00Z'),
-            messageCount: 5
-          }
+            messageCount: 5,
+          },
         ];
 
         const mockResponse: EndpointStatusResponse = {
-          endpoints: mockEndpoints
+          endpoints: mockEndpoints,
         };
 
         const expectedResponse = {
@@ -418,9 +423,9 @@ describe('OSCMCPServer', () => {
               bufferSize: 1000,
               addressFilters: [],
               createdAt: '2024-01-01T12:00:00.000Z',
-              messageCount: 5
-            }
-          ]
+              messageCount: 5,
+            },
+          ],
         };
 
         mockOSCManager.getEndpointStatus.mockReturnValue(mockResponse);
@@ -428,8 +433,8 @@ describe('OSCMCPServer', () => {
         const request = {
           params: {
             name: 'get_endpoint_status',
-            arguments: { endpointId: 'endpoint-1' }
-          }
+            arguments: { endpointId: 'endpoint-1' },
+          },
         };
 
         const result = await callToolHandler(request);
@@ -444,8 +449,8 @@ describe('OSCMCPServer', () => {
         const request = {
           params: {
             name: 'unknown_tool',
-            arguments: {}
-          }
+            arguments: {},
+          },
         };
 
         await expect(callToolHandler(request)).rejects.toThrow();
@@ -457,8 +462,8 @@ describe('OSCMCPServer', () => {
         const request = {
           params: {
             name: 'create_osc_endpoint',
-            arguments: { port: 8000 }
-          }
+            arguments: { port: 8000 },
+          },
         };
 
         await expect(callToolHandler(request)).rejects.toThrow();
@@ -478,15 +483,15 @@ describe('OSCMCPServer', () => {
             // Invalid address filters
             { arguments: { port: 8000, addressFilters: 'invalid' } },
             // Invalid address pattern in filters
-            { arguments: { port: 8000, addressFilters: ['invalid'] } }
+            { arguments: { port: 8000, addressFilters: ['invalid'] } },
           ];
 
           for (const args of invalidRequests) {
             const request = {
               params: {
                 name: 'create_osc_endpoint',
-                arguments: args.arguments
-              }
+                arguments: args.arguments,
+              },
             };
 
             await expect(callToolHandler(request)).rejects.toThrow();
@@ -500,15 +505,15 @@ describe('OSCMCPServer', () => {
             // Invalid endpoint ID type
             { arguments: { endpointId: 123 } },
             // Empty endpoint ID
-            { arguments: { endpointId: '' } }
+            { arguments: { endpointId: '' } },
           ];
 
           for (const args of invalidRequests) {
             const request = {
               params: {
                 name: 'stop_osc_endpoint',
-                arguments: args.arguments
-              }
+                arguments: args.arguments,
+              },
             };
 
             await expect(callToolHandler(request)).rejects.toThrow();
@@ -528,15 +533,15 @@ describe('OSCMCPServer', () => {
             // Invalid limit
             { arguments: { limit: 'invalid' } },
             // Limit out of range
-            { arguments: { limit: 2000 } }
+            { arguments: { limit: 2000 } },
           ];
 
           for (const args of invalidRequests) {
             const request = {
               params: {
                 name: 'get_osc_messages',
-                arguments: args.arguments
-              }
+                arguments: args.arguments,
+              },
             };
 
             await expect(callToolHandler(request)).rejects.toThrow();
@@ -547,8 +552,8 @@ describe('OSCMCPServer', () => {
           const request = {
             params: {
               name: 'get_endpoint_status',
-              arguments: { endpointId: 123 } // Invalid type
-            }
+              arguments: { endpointId: 123 }, // Invalid type
+            },
           };
 
           await expect(callToolHandler(request)).rejects.toThrow();
@@ -561,7 +566,7 @@ describe('OSCMCPServer', () => {
             endpointId: '',
             port: 8000,
             status: 'error',
-            message: 'Port 8000 is already in use. Please try a different port.'
+            message: 'Port 8000 is already in use. Please try a different port.',
           };
 
           mockOSCManager.createEndpoint.mockResolvedValue(mockResponse);
@@ -569,8 +574,8 @@ describe('OSCMCPServer', () => {
           const request = {
             params: {
               name: 'create_osc_endpoint',
-              arguments: { port: 8000 }
-            }
+              arguments: { port: 8000 },
+            },
           };
 
           await expect(callToolHandler(request)).rejects.toThrow();
@@ -581,7 +586,8 @@ describe('OSCMCPServer', () => {
             endpointId: '',
             port: 80,
             status: 'error',
-            message: 'Permission denied to bind to port 80. Try using a port number above 1024 or run with appropriate privileges.'
+            message:
+              'Permission denied to bind to port 80. Try using a port number above 1024 or run with appropriate privileges.',
           };
 
           mockOSCManager.createEndpoint.mockResolvedValue(mockResponse);
@@ -589,8 +595,8 @@ describe('OSCMCPServer', () => {
           const request = {
             params: {
               name: 'create_osc_endpoint',
-              arguments: { port: 80 }
-            }
+              arguments: { port: 80 },
+            },
           };
 
           await expect(callToolHandler(request)).rejects.toThrow();
@@ -601,7 +607,8 @@ describe('OSCMCPServer', () => {
         it('should handle endpoint not found errors', async () => {
           const mockResponse: StopEndpointResponse = {
             endpointId: 'nonexistent',
-            message: 'Endpoint \'nonexistent\' not found. Please check the endpoint ID and try again.'
+            message:
+              "Endpoint 'nonexistent' not found. Please check the endpoint ID and try again.",
           };
 
           mockOSCManager.stopEndpoint.mockResolvedValue(mockResponse);
@@ -609,8 +616,8 @@ describe('OSCMCPServer', () => {
           const request = {
             params: {
               name: 'stop_osc_endpoint',
-              arguments: { endpointId: 'nonexistent' }
-            }
+              arguments: { endpointId: 'nonexistent' },
+            },
           };
 
           const result = await callToolHandler(request);
@@ -625,8 +632,8 @@ describe('OSCMCPServer', () => {
           const request = {
             params: {
               name: 'create_osc_endpoint',
-              arguments: { port: 8000 }
-            }
+              arguments: { port: 8000 },
+            },
           };
 
           await expect(callToolHandler(request)).rejects.toThrow();
@@ -640,8 +647,8 @@ describe('OSCMCPServer', () => {
           const request = {
             params: {
               name: 'get_osc_messages',
-              arguments: {}
-            }
+              arguments: {},
+            },
           };
 
           await expect(callToolHandler(request)).rejects.toThrow();
@@ -655,8 +662,8 @@ describe('OSCMCPServer', () => {
           const request = {
             params: {
               name: 'get_endpoint_status',
-              arguments: {}
-            }
+              arguments: {},
+            },
           };
 
           await expect(callToolHandler(request)).rejects.toThrow();
@@ -668,7 +675,7 @@ describe('OSCMCPServer', () => {
   describe('VSCode Compatibility', () => {
     it('should use stdio transport for VSCode integration', async () => {
       const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
-      
+
       await server.start();
 
       expect(StdioServerTransport).toHaveBeenCalled();

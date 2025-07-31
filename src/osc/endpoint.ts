@@ -1,13 +1,21 @@
 /**
  * OSC Endpoint
- * 
+ *
  * Handles individual OSC listening endpoints with UDP socket management,
  * message reception, parsing, and integration with message buffer.
  */
 
 import { createSocket, Socket, RemoteInfo } from 'dgram';
 import { EventEmitter } from 'events';
-import { OSCEndpointInfo, OSCEndpointConfig, OSCEndpointStatus, OSCMessage, ErrorCode, OSCError, MessageBufferConfig } from '../types/index';
+import {
+  OSCEndpointInfo,
+  OSCEndpointConfig,
+  OSCEndpointStatus,
+  OSCMessage,
+  ErrorCode,
+  OSCError,
+  MessageBufferConfig,
+} from '../types/index';
 import { parseOSCMessage } from './parser';
 import { MessageBuffer, createMessageBuffer } from './buffer';
 import { NetworkErrors, EndpointErrors } from '../errors/index';
@@ -16,9 +24,9 @@ import { NetworkErrors, EndpointErrors } from '../errors/index';
  * Events emitted by OSCEndpoint
  */
 export interface OSCEndpointEvents {
-  'message': (message: OSCMessage) => void;
-  'error': (error: OSCError) => void;
-  'statusChange': (status: OSCEndpointStatus) => void;
+  message: (message: OSCMessage) => void;
+  error: (error: OSCError) => void;
+  statusChange: (status: OSCEndpointStatus) => void;
 }
 
 /**
@@ -30,7 +38,7 @@ export class OSCEndpoint extends EventEmitter {
   private readonly bufferSize: number;
   private readonly addressFilters: string[];
   private readonly createdAt: Date;
-  
+
   private socket: Socket | null = null;
   private status: OSCEndpointStatus = 'stopped';
   private messageBuffer: MessageBuffer;
@@ -38,13 +46,13 @@ export class OSCEndpoint extends EventEmitter {
 
   /**
    * Creates a new OSC endpoint
-   * 
+   *
    * @param id Unique identifier for this endpoint
    * @param config Endpoint configuration
    */
   constructor(id: string, config: OSCEndpointConfig) {
     super();
-    
+
     this.id = id;
     this.port = config.port;
     this.bufferSize = config.bufferSize || 1000;
@@ -60,14 +68,14 @@ export class OSCEndpoint extends EventEmitter {
     // Create message buffer
     const bufferConfig: MessageBufferConfig = {
       maxSize: this.bufferSize,
-      addressFilters: this.addressFilters
+      addressFilters: this.addressFilters,
     };
     this.messageBuffer = createMessageBuffer(bufferConfig);
   }
 
   /**
    * Starts listening for OSC messages on the configured port
-   * 
+   *
    * @returns Promise that resolves when listening starts successfully
    */
   async startListening(): Promise<void> {
@@ -98,11 +106,13 @@ export class OSCEndpoint extends EventEmitter {
           this.emit('statusChange', this.status);
           resolve();
         });
-
       } catch (error) {
         this.status = 'error';
         this.emit('statusChange', this.status);
-        const startError = EndpointErrors.startFailed(this.id, error instanceof Error ? error.message : 'Unknown error');
+        const startError = EndpointErrors.startFailed(
+          this.id,
+          error instanceof Error ? error.message : 'Unknown error'
+        );
         reject(new Error(startError.message));
       }
     });
@@ -110,7 +120,7 @@ export class OSCEndpoint extends EventEmitter {
 
   /**
    * Stops listening and closes the UDP socket
-   * 
+   *
    * @returns Promise that resolves when socket is closed
    */
   async stopListening(): Promise<void> {
@@ -118,7 +128,7 @@ export class OSCEndpoint extends EventEmitter {
       return; // Already stopped
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if (this.socket) {
         this.socket.close(() => {
           this.socket = null;
@@ -136,7 +146,7 @@ export class OSCEndpoint extends EventEmitter {
 
   /**
    * Gets the current status and information about this endpoint
-   * 
+   *
    * @returns OSCEndpointInfo information object
    */
   getStatus(): OSCEndpointInfo {
@@ -147,13 +157,13 @@ export class OSCEndpoint extends EventEmitter {
       bufferSize: this.bufferSize,
       addressFilters: [...this.addressFilters],
       createdAt: this.createdAt,
-      messageCount: this.messageCount
+      messageCount: this.messageCount,
     };
   }
 
   /**
    * Gets the message buffer for this endpoint
-   * 
+   *
    * @returns MessageBuffer instance
    */
   getMessageBuffer(): MessageBuffer {
@@ -162,7 +172,7 @@ export class OSCEndpoint extends EventEmitter {
 
   /**
    * Gets the unique ID of this endpoint
-   * 
+   *
    * @returns Endpoint ID
    */
   getId(): string {
@@ -171,7 +181,7 @@ export class OSCEndpoint extends EventEmitter {
 
   /**
    * Gets the port this endpoint is configured to listen on
-   * 
+   *
    * @returns Port number
    */
   getPort(): number {
@@ -180,7 +190,7 @@ export class OSCEndpoint extends EventEmitter {
 
   /**
    * Checks if this endpoint is currently active (listening)
-   * 
+   *
    * @returns True if endpoint is actively listening
    */
   isActive(): boolean {
@@ -189,7 +199,7 @@ export class OSCEndpoint extends EventEmitter {
 
   /**
    * Handles incoming UDP messages
-   * 
+   *
    * @param data Raw message data
    * @param rinfo Remote sender information
    */
@@ -197,7 +207,7 @@ export class OSCEndpoint extends EventEmitter {
     try {
       // Parse the OSC message
       const parseResult = parseOSCMessage(data, rinfo.address, rinfo.port);
-      
+
       if (parseResult.error) {
         // Emit error but continue listening
         this.emit('error', parseResult.error);
@@ -212,13 +222,12 @@ export class OSCEndpoint extends EventEmitter {
         // Emit message event
         this.emit('message', parseResult.message);
       }
-
     } catch (error) {
       // Handle unexpected errors
       const oscError: OSCError = {
         code: ErrorCode.MESSAGE_PARSE_ERROR,
         message: `Unexpected error processing message: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        details: { originalError: error }
+        details: { originalError: error },
       };
       this.emit('error', oscError);
     }
@@ -226,7 +235,7 @@ export class OSCEndpoint extends EventEmitter {
 
   /**
    * Handles socket errors
-   * 
+   *
    * @param error Socket error
    */
   private handleSocketError(error: Error): void {
@@ -241,11 +250,14 @@ export class OSCEndpoint extends EventEmitter {
     } else if (error.message.includes('EACCES')) {
       oscError = NetworkErrors.permissionDenied(this.port);
     } else {
-      oscError = NetworkErrors.networkError(`Network error on endpoint ${this.id}: ${error.message}`, {
-        originalError: error,
-        port: this.port,
-        endpointId: this.id
-      });
+      oscError = NetworkErrors.networkError(
+        `Network error on endpoint ${this.id}: ${error.message}`,
+        {
+          originalError: error,
+          port: this.port,
+          endpointId: this.id,
+        }
+      );
     }
 
     this.emit('error', oscError);
@@ -253,7 +265,7 @@ export class OSCEndpoint extends EventEmitter {
 
   /**
    * Validates if a port number is in the valid range
-   * 
+   *
    * @param port Port number to validate
    * @returns True if port is valid
    */
@@ -263,13 +275,13 @@ export class OSCEndpoint extends EventEmitter {
 
   /**
    * Generates suggested alternative ports when the requested port is in use
-   * 
+   *
    * @returns Array of suggested port numbers
    */
   private getSuggestedPorts(): number[] {
     const suggestions: number[] = [];
     const basePort = this.port;
-    
+
     // Suggest next 3 ports
     for (let i = 1; i <= 3; i++) {
       const suggestedPort = basePort + i;
@@ -277,14 +289,14 @@ export class OSCEndpoint extends EventEmitter {
         suggestions.push(suggestedPort);
       }
     }
-    
+
     return suggestions;
   }
 }
 
 /**
  * Creates a new OSC endpoint with the specified configuration
- * 
+ *
  * @param id Unique identifier for the endpoint
  * @param config Endpoint configuration
  * @returns New OSCEndpoint instance

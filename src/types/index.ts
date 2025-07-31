@@ -38,7 +38,7 @@ export enum OSCType {
   INT32 = 'i',
   FLOAT32 = 'f',
   STRING = 's',
-  BLOB = 'b'
+  BLOB = 'b',
 }
 
 // ============================================================================
@@ -189,23 +189,23 @@ export enum ErrorCode {
   PORT_INVALID = 'PORT_INVALID',
   PERMISSION_DENIED = 'PERMISSION_DENIED',
   NETWORK_ERROR = 'NETWORK_ERROR',
-  
+
   // Endpoint errors
   ENDPOINT_NOT_FOUND = 'ENDPOINT_NOT_FOUND',
   ENDPOINT_ALREADY_EXISTS = 'ENDPOINT_ALREADY_EXISTS',
   ENDPOINT_START_FAILED = 'ENDPOINT_START_FAILED',
-  
+
   // Message errors
   MESSAGE_PARSE_ERROR = 'MESSAGE_PARSE_ERROR',
   INVALID_OSC_MESSAGE = 'INVALID_OSC_MESSAGE',
-  
+
   // Parameter validation errors
   INVALID_PARAMETERS = 'INVALID_PARAMETERS',
   MISSING_REQUIRED_PARAMETER = 'MISSING_REQUIRED_PARAMETER',
-  
+
   // General errors
   INTERNAL_ERROR = 'INTERNAL_ERROR',
-  OPERATION_FAILED = 'OPERATION_FAILED'
+  OPERATION_FAILED = 'OPERATION_FAILED',
 }
 
 /**

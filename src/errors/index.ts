@@ -1,6 +1,6 @@
 /**
  * Comprehensive Error Handling System
- * 
+ *
  * This module provides structured error handling with user-friendly messages,
  * error codes, and proper error responses for all failure cases.
  */
@@ -18,7 +18,7 @@ export function createOSCError(
   return {
     code,
     message,
-    details: details || {}
+    details: details || {},
   };
 }
 
@@ -32,7 +32,7 @@ export class NetworkErrors {
       `Port ${port} is already in use. Please try a different port.`,
       {
         port,
-        suggestedPorts: suggestedPorts.length > 0 ? suggestedPorts : [port + 1, port + 2, port + 3]
+        suggestedPorts: suggestedPorts.length > 0 ? suggestedPorts : [port + 1, port + 2, port + 3],
       }
     );
   }
@@ -43,7 +43,7 @@ export class NetworkErrors {
       `Invalid port number: ${port}. Port must be between 1024 and 65535.`,
       {
         port,
-        validRange: { min: 1024, max: 65535 }
+        validRange: { min: 1024, max: 65535 },
       }
     );
   }
@@ -54,17 +54,13 @@ export class NetworkErrors {
       `Permission denied to bind to port ${port}. Try using a port number above 1024 or run with appropriate privileges.`,
       {
         port,
-        suggestion: 'Use a port number above 1024 or run with appropriate privileges'
+        suggestion: 'Use a port number above 1024 or run with appropriate privileges',
       }
     );
   }
 
   static networkError(message: string, details?: Record<string, any>): OSCError {
-    return createOSCError(
-      ErrorCode.NETWORK_ERROR,
-      `Network error: ${message}`,
-      details
-    );
+    return createOSCError(ErrorCode.NETWORK_ERROR, `Network error: ${message}`, details);
   }
 }
 
@@ -126,11 +122,9 @@ export class MessageErrors {
   }
 
   static invalidMessage(reason: string): OSCError {
-    return createOSCError(
-      ErrorCode.INVALID_OSC_MESSAGE,
-      `Invalid OSC message format: ${reason}`,
-      { reason }
-    );
+    return createOSCError(ErrorCode.INVALID_OSC_MESSAGE, `Invalid OSC message format: ${reason}`, {
+      reason,
+    });
   }
 
   static unsupportedType(typeTag: string): OSCError {
@@ -139,7 +133,7 @@ export class MessageErrors {
       `Unsupported OSC type tag '${typeTag}'. Supported types: i (int32), f (float32), s (string), b (blob).`,
       {
         unsupportedType: typeTag,
-        supportedTypes: ['i', 'f', 's', 'b']
+        supportedTypes: ['i', 'f', 's', 'b'],
       }
     );
   }
@@ -164,7 +158,7 @@ export class ValidationErrors {
       {
         paramName,
         providedValue: value,
-        expectedType
+        expectedType,
       }
     );
   }
@@ -176,7 +170,7 @@ export class ValidationErrors {
       {
         paramName,
         value,
-        validRange: { min, max }
+        validRange: { min, max },
       }
     );
   }
@@ -187,7 +181,7 @@ export class ValidationErrors {
       `Invalid OSC address pattern: '${pattern}'. Address patterns must start with '/' and contain valid OSC characters.`,
       {
         pattern,
-        requirements: 'Must start with \'/\' and contain valid OSC characters'
+        requirements: "Must start with '/' and contain valid OSC characters",
       }
     );
   }
@@ -198,11 +192,7 @@ export class ValidationErrors {
  */
 export class OperationErrors {
   static internalError(message: string, details?: Record<string, any>): OSCError {
-    return createOSCError(
-      ErrorCode.INTERNAL_ERROR,
-      `Internal error: ${message}`,
-      details
-    );
+    return createOSCError(ErrorCode.INTERNAL_ERROR, `Internal error: ${message}`, details);
   }
 
   static operationFailed(operation: string, reason: string): OSCError {
@@ -222,14 +212,10 @@ export class ErrorUtils {
    * Converts a generic Error to an OSCError
    */
   static fromError(error: Error, code: ErrorCode = ErrorCode.INTERNAL_ERROR): OSCError {
-    return createOSCError(
-      code,
-      error.message,
-      {
-        originalError: error.name,
-        stack: error.stack
-      }
-    );
+    return createOSCError(code, error.message, {
+      originalError: error.name,
+      stack: error.stack,
+    });
   }
 
   /**
@@ -240,7 +226,7 @@ export class ErrorUtils {
       ErrorCode.PORT_IN_USE,
       ErrorCode.PORT_INVALID,
       ErrorCode.PERMISSION_DENIED,
-      ErrorCode.NETWORK_ERROR
+      ErrorCode.NETWORK_ERROR,
     ].includes(error.code);
   }
 
@@ -252,7 +238,7 @@ export class ErrorUtils {
       ErrorCode.PORT_IN_USE,
       ErrorCode.PORT_INVALID,
       ErrorCode.INVALID_PARAMETERS,
-      ErrorCode.MISSING_REQUIRED_PARAMETER
+      ErrorCode.MISSING_REQUIRED_PARAMETER,
     ].includes(error.code);
   }
 
@@ -308,7 +294,7 @@ export function formatErrorResponse(error: OSCError): any {
       code: error.code,
       message: error.message,
       details: error.details,
-      suggestions: ErrorUtils.getSuggestions(error)
-    }
+      suggestions: ErrorUtils.getSuggestions(error),
+    },
   };
 }

@@ -10,7 +10,7 @@ import {
   validateEndpointId,
   validateTimeWindow,
   validateLimit,
-  ParameterValidator
+  ParameterValidator,
 } from './validation';
 import { ErrorCode } from '../types/index';
 
@@ -25,7 +25,7 @@ describe('Parameter Validation', () => {
     it('should reject undefined/null ports', () => {
       const result1 = validatePort(undefined);
       const result2 = validatePort(null);
-      
+
       expect(result1.isValid).toBe(false);
       expect(result1.error?.code).toBe(ErrorCode.MISSING_REQUIRED_PARAMETER);
       expect(result2.isValid).toBe(false);
@@ -35,7 +35,7 @@ describe('Parameter Validation', () => {
     it('should reject non-integer ports', () => {
       const result1 = validatePort('8000');
       const result2 = validatePort(8000.5);
-      
+
       expect(result1.isValid).toBe(false);
       expect(result1.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       expect(result2.isValid).toBe(false);
@@ -45,7 +45,7 @@ describe('Parameter Validation', () => {
     it('should reject ports out of range', () => {
       const result1 = validatePort(1023);
       const result2 = validatePort(65536);
-      
+
       expect(result1.isValid).toBe(false);
       expect(result1.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       expect(result2.isValid).toBe(false);
@@ -68,7 +68,7 @@ describe('Parameter Validation', () => {
     it('should reject non-integer buffer sizes', () => {
       const result1 = validateBufferSize('1000');
       const result2 = validateBufferSize(1000.5);
-      
+
       expect(result1.isValid).toBe(false);
       expect(result1.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       expect(result2.isValid).toBe(false);
@@ -78,7 +78,7 @@ describe('Parameter Validation', () => {
     it('should reject buffer sizes out of range', () => {
       const result1 = validateBufferSize(0);
       const result2 = validateBufferSize(10001);
-      
+
       expect(result1.isValid).toBe(false);
       expect(result1.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       expect(result2.isValid).toBe(false);
@@ -95,7 +95,7 @@ describe('Parameter Validation', () => {
 
     it('should reject patterns not starting with /', () => {
       const result = validateAddressPattern('test');
-      
+
       expect(result.isValid).toBe(false);
       expect(result.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
     });
@@ -103,7 +103,7 @@ describe('Parameter Validation', () => {
     it('should reject patterns with invalid characters', () => {
       const result1 = validateAddressPattern('/test<invalid>');
       const result2 = validateAddressPattern('/test"invalid"');
-      
+
       expect(result1.isValid).toBe(false);
       expect(result1.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       expect(result2.isValid).toBe(false);
@@ -124,21 +124,21 @@ describe('Parameter Validation', () => {
 
     it('should reject non-array filters', () => {
       const result = validateAddressFilters('/test');
-      
+
       expect(result.isValid).toBe(false);
       expect(result.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
     });
 
     it('should reject arrays with non-string elements', () => {
       const result = validateAddressFilters(['/test', 123]);
-      
+
       expect(result.isValid).toBe(false);
       expect(result.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
     });
 
     it('should reject arrays with invalid address patterns', () => {
       const result = validateAddressFilters(['/test', 'invalid']);
-      
+
       expect(result.isValid).toBe(false);
       expect(result.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
     });
@@ -154,7 +154,7 @@ describe('Parameter Validation', () => {
       const result1 = validateEndpointId(undefined);
       const result2 = validateEndpointId(null);
       const result3 = validateEndpointId('');
-      
+
       expect(result1.isValid).toBe(false);
       expect(result1.error?.code).toBe(ErrorCode.MISSING_REQUIRED_PARAMETER);
       expect(result2.isValid).toBe(false);
@@ -165,14 +165,14 @@ describe('Parameter Validation', () => {
 
     it('should reject non-string endpoint IDs', () => {
       const result = validateEndpointId(123);
-      
+
       expect(result.isValid).toBe(false);
       expect(result.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
     });
 
     it('should reject whitespace-only endpoint IDs', () => {
       const result = validateEndpointId('   ');
-      
+
       expect(result.isValid).toBe(false);
       expect(result.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
     });
@@ -192,7 +192,7 @@ describe('Parameter Validation', () => {
 
     it('should reject non-number time windows', () => {
       const result = validateTimeWindow('3600');
-      
+
       expect(result.isValid).toBe(false);
       expect(result.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
     });
@@ -200,7 +200,7 @@ describe('Parameter Validation', () => {
     it('should reject time windows out of range', () => {
       const result1 = validateTimeWindow(0);
       const result2 = validateTimeWindow(86401);
-      
+
       expect(result1.isValid).toBe(false);
       expect(result1.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       expect(result2.isValid).toBe(false);
@@ -223,7 +223,7 @@ describe('Parameter Validation', () => {
     it('should reject non-integer limits', () => {
       const result1 = validateLimit('100');
       const result2 = validateLimit(100.5);
-      
+
       expect(result1.isValid).toBe(false);
       expect(result1.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       expect(result2.isValid).toBe(false);
@@ -233,7 +233,7 @@ describe('Parameter Validation', () => {
     it('should reject limits out of range', () => {
       const result1 = validateLimit(0);
       const result2 = validateLimit(1001);
-      
+
       expect(result1.isValid).toBe(false);
       expect(result1.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       expect(result2.isValid).toBe(false);
@@ -247,21 +247,21 @@ describe('Parameter Validation', () => {
         const params = {
           port: 8000,
           bufferSize: 1000,
-          addressFilters: ['/test', '/synth/*']
+          addressFilters: ['/test', '/synth/*'],
         };
-        
+
         expect(ParameterValidator.validateCreateEndpoint(params).isValid).toBe(true);
       });
 
       it('should accept minimal valid parameters', () => {
         const params = { port: 8000 };
-        
+
         expect(ParameterValidator.validateCreateEndpoint(params).isValid).toBe(true);
       });
 
       it('should reject non-object parameters', () => {
         const result = ParameterValidator.validateCreateEndpoint('invalid');
-        
+
         expect(result.isValid).toBe(false);
         expect(result.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       });
@@ -269,7 +269,7 @@ describe('Parameter Validation', () => {
       it('should reject parameters with invalid port', () => {
         const params = { port: 100 };
         const result = ParameterValidator.validateCreateEndpoint(params);
-        
+
         expect(result.isValid).toBe(false);
         expect(result.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       });
@@ -277,7 +277,7 @@ describe('Parameter Validation', () => {
       it('should reject parameters with invalid buffer size', () => {
         const params = { port: 8000, bufferSize: 0 };
         const result = ParameterValidator.validateCreateEndpoint(params);
-        
+
         expect(result.isValid).toBe(false);
         expect(result.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       });
@@ -285,7 +285,7 @@ describe('Parameter Validation', () => {
       it('should reject parameters with invalid address filters', () => {
         const params = { port: 8000, addressFilters: ['invalid'] };
         const result = ParameterValidator.validateCreateEndpoint(params);
-        
+
         expect(result.isValid).toBe(false);
         expect(result.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       });
@@ -294,14 +294,14 @@ describe('Parameter Validation', () => {
     describe('validateStopEndpoint', () => {
       it('should accept valid stop endpoint parameters', () => {
         const params = { endpointId: 'endpoint-1' };
-        
+
         expect(ParameterValidator.validateStopEndpoint(params).isValid).toBe(true);
       });
 
       it('should reject parameters without endpoint ID', () => {
         const params = {};
         const result = ParameterValidator.validateStopEndpoint(params);
-        
+
         expect(result.isValid).toBe(false);
         expect(result.error?.code).toBe(ErrorCode.MISSING_REQUIRED_PARAMETER);
       });
@@ -313,22 +313,22 @@ describe('Parameter Validation', () => {
           endpointId: 'endpoint-1',
           addressPattern: '/test',
           timeWindowSeconds: 3600,
-          limit: 100
+          limit: 100,
         };
-        
+
         expect(ParameterValidator.validateGetMessages(params).isValid).toBe(true);
       });
 
       it('should accept empty parameters', () => {
         const params = {};
-        
+
         expect(ParameterValidator.validateGetMessages(params).isValid).toBe(true);
       });
 
       it('should reject parameters with invalid address pattern', () => {
         const params = { addressPattern: 'invalid' };
         const result = ParameterValidator.validateGetMessages(params);
-        
+
         expect(result.isValid).toBe(false);
         expect(result.error?.code).toBe(ErrorCode.INVALID_PARAMETERS);
       });
@@ -337,13 +337,13 @@ describe('Parameter Validation', () => {
     describe('validateGetEndpointStatus', () => {
       it('should accept valid get endpoint status parameters', () => {
         const params = { endpointId: 'endpoint-1' };
-        
+
         expect(ParameterValidator.validateGetEndpointStatus(params).isValid).toBe(true);
       });
 
       it('should accept empty parameters', () => {
         const params = {};
-        
+
         expect(ParameterValidator.validateGetEndpointStatus(params).isValid).toBe(true);
       });
     });

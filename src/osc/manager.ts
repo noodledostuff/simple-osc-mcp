@@ -1,22 +1,22 @@
 /**
  * OSC Manager
- * 
+ *
  * Coordinates multiple OSC endpoints, providing centralized management
  * for creating, stopping, and querying OSC endpoints and their messages.
  */
 
 import { EventEmitter } from 'events';
 import { OSCEndpoint, createOSCEndpoint } from './endpoint';
-import { 
-  OSCEndpointInfo, 
-  OSCEndpointConfig, 
-  OSCMessage, 
+import {
+  OSCEndpointInfo,
+  OSCEndpointConfig,
+  OSCMessage,
   MessageQuery,
   OSCError,
   CreateEndpointResponse,
   StopEndpointResponse,
   MessageQueryResponse,
-  EndpointStatusResponse
+  EndpointStatusResponse,
 } from '../types/index';
 import { NetworkErrors, EndpointErrors, OperationErrors } from '../errors/index';
 
@@ -24,10 +24,10 @@ import { NetworkErrors, EndpointErrors, OperationErrors } from '../errors/index'
  * Events emitted by OSCManager
  */
 export interface OSCManagerEvents {
-  'endpointCreated': (endpointInfo: OSCEndpointInfo) => void;
-  'endpointStopped': (endpointId: string) => void;
-  'endpointError': (endpointId: string, error: OSCError) => void;
-  'messageReceived': (endpointId: string, message: OSCMessage) => void;
+  endpointCreated: (endpointInfo: OSCEndpointInfo) => void;
+  endpointStopped: (endpointId: string) => void;
+  endpointError: (endpointId: string, error: OSCError) => void;
+  messageReceived: (endpointId: string, message: OSCMessage) => void;
 }
 
 /**
@@ -39,7 +39,7 @@ export class OSCManager extends EventEmitter {
 
   /**
    * Creates a new OSC endpoint and starts listening
-   * 
+   *
    * @param config Endpoint configuration
    * @returns Promise resolving to endpoint creation response
    */
@@ -53,46 +53,48 @@ export class OSCManager extends EventEmitter {
           endpointId: '',
           port: config.port,
           status: 'error',
-          message: error.message
+          message: error.message,
         };
       }
 
       // Generate unique endpoint ID
       const endpointId = this.generateEndpointId();
-      
+
       // Create endpoint
       const endpoint = createOSCEndpoint(endpointId, config);
-      
+
       // Set up event handlers
       this.setupEndpointEventHandlers(endpoint);
-      
+
       // Start listening
       await endpoint.startListening();
-      
+
       // Store endpoint
       this.endpoints.set(endpointId, endpoint);
-      
+
       // Get endpoint info and emit event
       const endpointInfo = endpoint.getStatus();
       this.emit('endpointCreated', endpointInfo);
-      
+
       return {
         endpointId,
         port: config.port,
         status: 'active',
-        message: `OSC endpoint created successfully on port ${config.port}`
+        message: `OSC endpoint created successfully on port ${config.port}`,
       };
-
     } catch (error) {
       // Handle specific error types
       if (error instanceof Error) {
         if (error.message.includes('EADDRINUSE')) {
-          const networkError = NetworkErrors.portInUse(config.port, this.getSuggestedPorts(config.port));
+          const networkError = NetworkErrors.portInUse(
+            config.port,
+            this.getSuggestedPorts(config.port)
+          );
           return {
             endpointId: '',
             port: config.port,
             status: 'error',
-            message: networkError.message
+            message: networkError.message,
           };
         } else if (error.message.includes('EACCES')) {
           const networkError = NetworkErrors.permissionDenied(config.port);
@@ -100,7 +102,7 @@ export class OSCManager extends EventEmitter {
             endpointId: '',
             port: config.port,
             status: 'error',
-            message: networkError.message
+            message: networkError.message,
           };
         } else if (error.message.includes('Invalid port')) {
           const networkError = NetworkErrors.portInvalid(config.port);
@@ -108,35 +110,38 @@ export class OSCManager extends EventEmitter {
             endpointId: '',
             port: config.port,
             status: 'error',
-            message: networkError.message
+            message: networkError.message,
           };
         }
       }
 
-      const operationError = OperationErrors.operationFailed('createEndpoint', error instanceof Error ? error.message : 'Unknown error');
+      const operationError = OperationErrors.operationFailed(
+        'createEndpoint',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
       return {
         endpointId: '',
         port: config.port,
         status: 'error',
-        message: operationError.message
+        message: operationError.message,
       };
     }
   }
 
   /**
    * Stops and removes an OSC endpoint
-   * 
+   *
    * @param endpointId ID of the endpoint to stop
    * @returns Promise resolving to stop response
    */
   async stopEndpoint(endpointId: string): Promise<StopEndpointResponse> {
     const endpoint = this.endpoints.get(endpointId);
-    
+
     if (!endpoint) {
       const error = EndpointErrors.notFound(endpointId);
       return {
         endpointId,
-        message: error.message
+        message: error.message,
       };
     }
 
@@ -146,36 +151,38 @@ export class OSCManager extends EventEmitter {
         const error = EndpointErrors.alreadyStopped(endpointId);
         return {
           endpointId,
-          message: error.message
+          message: error.message,
         };
       }
 
       // Stop the endpoint
       await endpoint.stopListening();
-      
+
       // Remove from registry
       this.endpoints.delete(endpointId);
-      
+
       // Emit event
       this.emit('endpointStopped', endpointId);
-      
-      return {
-        endpointId,
-        message: `Endpoint ${endpointId} stopped successfully`
-      };
 
-    } catch (error) {
-      const operationError = OperationErrors.operationFailed('stopEndpoint', error instanceof Error ? error.message : 'Unknown error');
       return {
         endpointId,
-        message: operationError.message
+        message: `Endpoint ${endpointId} stopped successfully`,
+      };
+    } catch (error) {
+      const operationError = OperationErrors.operationFailed(
+        'stopEndpoint',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+      return {
+        endpointId,
+        message: operationError.message,
       };
     }
   }
 
   /**
    * Gets status information for one or all endpoints
-   * 
+   *
    * @param endpointId Optional specific endpoint ID
    * @returns Endpoint status response
    */
@@ -195,7 +202,7 @@ export class OSCManager extends EventEmitter {
 
   /**
    * Queries OSC messages from one or all endpoints
-   * 
+   *
    * @param endpointId Optional specific endpoint ID
    * @param query Message query parameters
    * @returns Message query response
@@ -233,20 +240,20 @@ export class OSCManager extends EventEmitter {
     return {
       messages: allMessages,
       totalCount,
-      filteredCount: allMessages.length
+      filteredCount: allMessages.length,
     };
   }
 
   /**
    * Gets messages from a specific time window across all or specific endpoints
-   * 
+   *
    * @param timeWindowSeconds Number of seconds back from now
    * @param endpointId Optional specific endpoint ID
    * @param limit Optional limit on number of messages
    * @returns Recent messages
    */
   getRecentMessages(timeWindowSeconds: number, endpointId?: string, limit?: number): OSCMessage[] {
-    const since = new Date(Date.now() - (timeWindowSeconds * 1000));
+    const since = new Date(Date.now() - timeWindowSeconds * 1000);
     const query: MessageQuery = { since };
     if (limit !== undefined) {
       query.limit = limit;
@@ -258,7 +265,7 @@ export class OSCManager extends EventEmitter {
 
   /**
    * Stops all endpoints and cleans up resources
-   * 
+   *
    * @returns Promise that resolves when all endpoints are stopped
    */
   async shutdown(): Promise<void> {
@@ -278,7 +285,7 @@ export class OSCManager extends EventEmitter {
 
   /**
    * Gets the number of active endpoints
-   * 
+   *
    * @returns Number of active endpoints
    */
   getActiveEndpointCount(): number {
@@ -287,7 +294,7 @@ export class OSCManager extends EventEmitter {
 
   /**
    * Gets the total number of endpoints (active and inactive)
-   * 
+   *
    * @returns Total number of endpoints
    */
   getTotalEndpointCount(): number {
@@ -296,7 +303,7 @@ export class OSCManager extends EventEmitter {
 
   /**
    * Checks if a specific port is in use by any endpoint
-   * 
+   *
    * @param port Port number to check
    * @returns True if port is in use
    */
@@ -307,7 +314,7 @@ export class OSCManager extends EventEmitter {
 
   /**
    * Gets a list of all ports currently in use
-   * 
+   *
    * @returns Array of port numbers in use
    */
   getUsedPorts(): number[] {
@@ -318,7 +325,7 @@ export class OSCManager extends EventEmitter {
 
   /**
    * Finds an endpoint by its port number
-   * 
+   *
    * @param port Port number to search for
    * @returns OSCEndpoint if found, null otherwise
    */
@@ -333,7 +340,7 @@ export class OSCManager extends EventEmitter {
 
   /**
    * Generates a unique endpoint ID
-   * 
+   *
    * @returns Unique endpoint ID string
    */
   private generateEndpointId(): string {
@@ -344,14 +351,14 @@ export class OSCManager extends EventEmitter {
 
   /**
    * Gets suggested alternative ports when a port is in use
-   * 
+   *
    * @param requestedPort The port that was requested
    * @returns Array of suggested available ports
    */
   private getSuggestedPorts(requestedPort: number): number[] {
     const suggestions: number[] = [];
     const usedPorts = this.getUsedPorts();
-    
+
     // Suggest next 3 available ports starting from requested port + 1
     let candidate = requestedPort + 1;
     while (suggestions.length < 3 && candidate <= 65535) {
@@ -360,13 +367,13 @@ export class OSCManager extends EventEmitter {
       }
       candidate++;
     }
-    
+
     return suggestions;
   }
 
   /**
    * Sets up event handlers for an endpoint
-   * 
+   *
    * @param endpoint OSC endpoint to set up handlers for
    */
   private setupEndpointEventHandlers(endpoint: OSCEndpoint): void {
@@ -383,10 +390,12 @@ export class OSCManager extends EventEmitter {
     });
 
     // Handle status changes
-    endpoint.on('statusChange', (status) => {
+    endpoint.on('statusChange', status => {
       if (status === 'error') {
         // Endpoint encountered an error, we might want to remove it
-        console.warn(`Endpoint ${endpointId} encountered an error and changed status to: ${status}`);
+        console.warn(
+          `Endpoint ${endpointId} encountered an error and changed status to: ${status}`
+        );
       }
     });
   }
@@ -394,7 +403,7 @@ export class OSCManager extends EventEmitter {
 
 /**
  * Creates a new OSC manager instance
- * 
+ *
  * @returns New OSCManager instance
  */
 export function createOSCManager(): OSCManager {

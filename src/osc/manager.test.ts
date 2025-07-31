@@ -25,7 +25,7 @@ describe('OSCManager', () => {
       stopListening: jest.fn(),
       on: jest.fn(),
       emit: jest.fn(),
-      removeAllListeners: jest.fn()
+      removeAllListeners: jest.fn(),
     } as any;
 
     // Mock the createOSCEndpoint function
@@ -43,7 +43,7 @@ describe('OSCManager', () => {
     const testConfig: OSCEndpointConfig = {
       port: 8000,
       bufferSize: 100,
-      addressFilters: ['/test/*']
+      addressFilters: ['/test/*'],
     };
 
     beforeEach(() => {
@@ -57,7 +57,7 @@ describe('OSCManager', () => {
         bufferSize: 100,
         addressFilters: ['/test/*'],
         createdAt: new Date(),
-        messageCount: 0
+        messageCount: 0,
       });
       mockEndpoint.startListening.mockResolvedValue();
     });
@@ -72,7 +72,7 @@ describe('OSCManager', () => {
         endpointId: 'endpoint-1',
         port: 8000,
         status: 'active',
-        message: 'OSC endpoint created successfully on port 8000'
+        message: 'OSC endpoint created successfully on port 8000',
       });
 
       expect(mockEndpoint.startListening).toHaveBeenCalled();
@@ -80,7 +80,7 @@ describe('OSCManager', () => {
         expect.objectContaining({
           id: 'endpoint-1',
           port: 8000,
-          status: 'active'
+          status: 'active',
         })
       );
     });
@@ -104,7 +104,7 @@ describe('OSCManager', () => {
         endpointId: '',
         port: 8000,
         status: 'error',
-        message: 'Port 8000 is already in use by endpoint endpoint-1'
+        message: 'Port 8000 is already in use. Please try a different port.',
       });
     });
 
@@ -117,7 +117,7 @@ describe('OSCManager', () => {
         endpointId: '',
         port: 8000,
         status: 'error',
-        message: 'Failed to create OSC endpoint: Port in use'
+        message: "Operation 'createEndpoint' failed: Port in use",
       });
     });
 
@@ -125,12 +125,8 @@ describe('OSCManager', () => {
       const config1: OSCEndpointConfig = { port: 8001 };
       const config2: OSCEndpointConfig = { port: 8002 };
 
-      mockEndpoint.getId
-        .mockReturnValueOnce('endpoint-1')
-        .mockReturnValueOnce('endpoint-2');
-      mockEndpoint.getPort
-        .mockReturnValueOnce(8001)
-        .mockReturnValueOnce(8002);
+      mockEndpoint.getId.mockReturnValueOnce('endpoint-1').mockReturnValueOnce('endpoint-2');
+      mockEndpoint.getPort.mockReturnValueOnce(8001).mockReturnValueOnce(8002);
 
       const response1 = await manager.createEndpoint(config1);
       const response2 = await manager.createEndpoint(config2);
@@ -152,7 +148,7 @@ describe('OSCManager', () => {
         bufferSize: 100,
         addressFilters: [],
         createdAt: new Date(),
-        messageCount: 0
+        messageCount: 0,
       });
       mockEndpoint.startListening.mockResolvedValue();
       mockEndpoint.stopListening.mockResolvedValue();
@@ -168,7 +164,7 @@ describe('OSCManager', () => {
 
       expect(response).toEqual({
         endpointId: 'endpoint-1',
-        message: 'Endpoint endpoint-1 stopped successfully'
+        message: 'Endpoint endpoint-1 stopped successfully',
       });
 
       expect(mockEndpoint.stopListening).toHaveBeenCalled();
@@ -180,7 +176,7 @@ describe('OSCManager', () => {
 
       expect(response).toEqual({
         endpointId: 'non-existent',
-        message: 'Endpoint non-existent not found'
+        message: "Endpoint 'non-existent' not found. Please check the endpoint ID and try again.",
       });
     });
 
@@ -191,7 +187,7 @@ describe('OSCManager', () => {
 
       expect(response).toEqual({
         endpointId: 'endpoint-1',
-        message: 'Failed to stop endpoint endpoint-1: Stop failed'
+        message: "Operation 'stopEndpoint' failed: Stop failed",
       });
     });
 
@@ -215,7 +211,7 @@ describe('OSCManager', () => {
         bufferSize: 100,
         addressFilters: [],
         createdAt: new Date(),
-        messageCount: 0
+        messageCount: 0,
       });
       mockEndpoint.startListening.mockResolvedValue();
 
@@ -230,7 +226,7 @@ describe('OSCManager', () => {
         expect.objectContaining({
           id: 'endpoint-1',
           port: 8000,
-          status: 'active'
+          status: 'active',
         })
       );
     });
@@ -255,7 +251,7 @@ describe('OSCManager', () => {
     beforeEach(async () => {
       mockBuffer = {
         getMessages: jest.fn(),
-        getMessageCount: jest.fn()
+        getMessageCount: jest.fn(),
       };
 
       mockEndpoint.getId.mockReturnValue('endpoint-1');
@@ -268,7 +264,7 @@ describe('OSCManager', () => {
         bufferSize: 100,
         addressFilters: [],
         createdAt: new Date(),
-        messageCount: 0
+        messageCount: 0,
       });
       mockEndpoint.getMessageBuffer.mockReturnValue(mockBuffer);
       mockEndpoint.startListening.mockResolvedValue();
@@ -284,8 +280,8 @@ describe('OSCManager', () => {
           typeTags: 'f',
           arguments: [440.0],
           sourceIp: '192.168.1.100',
-          sourcePort: 57120
-        }
+          sourcePort: 57120,
+        },
       ];
 
       mockBuffer.getMessages.mockReturnValue(testMessages);
@@ -296,7 +292,7 @@ describe('OSCManager', () => {
       expect(response).toEqual({
         messages: testMessages,
         totalCount: 1,
-        filteredCount: 1
+        filteredCount: 1,
       });
 
       expect(mockBuffer.getMessages).toHaveBeenCalledWith({});
@@ -310,8 +306,8 @@ describe('OSCManager', () => {
           typeTags: 'f',
           arguments: [440.0],
           sourceIp: '192.168.1.100',
-          sourcePort: 57120
-        }
+          sourcePort: 57120,
+        },
       ];
 
       mockBuffer.getMessages.mockReturnValue(testMessages);
@@ -322,7 +318,7 @@ describe('OSCManager', () => {
       expect(response).toEqual({
         messages: testMessages,
         totalCount: 1,
-        filteredCount: 1
+        filteredCount: 1,
       });
     });
 
@@ -342,7 +338,7 @@ describe('OSCManager', () => {
       expect(response).toEqual({
         messages: [],
         totalCount: 0,
-        filteredCount: 0
+        filteredCount: 0,
       });
     });
   });
@@ -353,7 +349,7 @@ describe('OSCManager', () => {
     beforeEach(async () => {
       mockBuffer = {
         getMessages: jest.fn(),
-        getMessageCount: jest.fn()
+        getMessageCount: jest.fn(),
       };
 
       mockEndpoint.getId.mockReturnValue('endpoint-1');
@@ -366,7 +362,7 @@ describe('OSCManager', () => {
         bufferSize: 100,
         addressFilters: [],
         createdAt: new Date(),
-        messageCount: 0
+        messageCount: 0,
       });
       mockEndpoint.getMessageBuffer.mockReturnValue(mockBuffer);
       mockEndpoint.startListening.mockResolvedValue();
@@ -382,8 +378,8 @@ describe('OSCManager', () => {
           typeTags: 'f',
           arguments: [440.0],
           sourceIp: '192.168.1.100',
-          sourcePort: 57120
-        }
+          sourcePort: 57120,
+        },
       ];
 
       mockBuffer.getMessages.mockReturnValue(testMessages);
@@ -395,7 +391,7 @@ describe('OSCManager', () => {
       expect(mockBuffer.getMessages).toHaveBeenCalledWith(
         expect.objectContaining({
           since: expect.any(Date),
-          limit: 10
+          limit: 10,
         })
       );
     });
@@ -413,7 +409,7 @@ describe('OSCManager', () => {
         bufferSize: 100,
         addressFilters: [],
         createdAt: new Date(),
-        messageCount: 0
+        messageCount: 0,
       });
       mockEndpoint.startListening.mockResolvedValue();
       mockEndpoint.stopListening.mockResolvedValue();
@@ -455,7 +451,7 @@ describe('OSCManager', () => {
         bufferSize: 100,
         addressFilters: [],
         createdAt: new Date(),
-        messageCount: 0
+        messageCount: 0,
       });
       mockEndpoint.startListening.mockResolvedValue();
 
@@ -482,7 +478,7 @@ describe('OSCManager', () => {
 
     it('should handle inactive endpoints in port checks', () => {
       mockEndpoint.isActive.mockReturnValue(false);
-      
+
       expect(manager.isPortInUse(8000)).toBe(false);
       expect(manager.getUsedPorts()).toEqual([]);
       expect(manager.getActiveEndpointCount()).toBe(0);
@@ -504,7 +500,7 @@ describe('OSCManager', () => {
         bufferSize: 100,
         addressFilters: [],
         createdAt: new Date(),
-        messageCount: 0
+        messageCount: 0,
       });
       mockEndpoint.startListening.mockResolvedValue();
 
@@ -526,7 +522,7 @@ describe('OSCManager', () => {
         typeTags: 'f',
         arguments: [440.0],
         sourceIp: '192.168.1.100',
-        sourcePort: 57120
+        sourcePort: 57120,
       };
 
       if (messageHandler) {
@@ -542,7 +538,7 @@ describe('OSCManager', () => {
 
       const testError = {
         code: ErrorCode.NETWORK_ERROR,
-        message: 'Test error'
+        message: 'Test error',
       };
 
       if (errorHandler) {

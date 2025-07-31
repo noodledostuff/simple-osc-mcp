@@ -1,6 +1,6 @@
 /**
  * Parameter Validation Module
- * 
+ *
  * Provides comprehensive validation for all tool parameters and configurations
  * with detailed error messages and suggestions.
  */
@@ -109,10 +109,12 @@ export function validateAddressFilters(filters: any): ValidationResult {
   // Validate each filter
   for (let i = 0; i < filters.length; i++) {
     const filter = filters[i];
-    
+
     // Each filter must be a string
     if (typeof filter !== 'string') {
-      return invalidResult(ValidationErrors.invalidParameter(`addressFilters[${i}]`, filter, 'string'));
+      return invalidResult(
+        ValidationErrors.invalidParameter(`addressFilters[${i}]`, filter, 'string')
+      );
     }
 
     // Validate the address pattern
@@ -141,7 +143,9 @@ export function validateEndpointId(endpointId: any): ValidationResult {
 
   // Check endpoint ID format (basic validation)
   if (endpointId.trim().length === 0) {
-    return invalidResult(ValidationErrors.invalidParameter('endpointId', endpointId, 'non-empty string'));
+    return invalidResult(
+      ValidationErrors.invalidParameter('endpointId', endpointId, 'non-empty string')
+    );
   }
 
   return validResult();
@@ -158,12 +162,17 @@ export function validateTimeWindow(timeWindowSeconds: any): ValidationResult {
 
   // Check if time window is a number
   if (typeof timeWindowSeconds !== 'number') {
-    return invalidResult(ValidationErrors.invalidParameter('timeWindowSeconds', timeWindowSeconds, 'number'));
+    return invalidResult(
+      ValidationErrors.invalidParameter('timeWindowSeconds', timeWindowSeconds, 'number')
+    );
   }
 
   // Check time window range
-  if (timeWindowSeconds < 1 || timeWindowSeconds > 86400) { // Max 24 hours
-    return invalidResult(ValidationErrors.parameterOutOfRange('timeWindowSeconds', timeWindowSeconds, 1, 86400));
+  if (timeWindowSeconds < 1 || timeWindowSeconds > 86400) {
+    // Max 24 hours
+    return invalidResult(
+      ValidationErrors.parameterOutOfRange('timeWindowSeconds', timeWindowSeconds, 1, 86400)
+    );
   }
 
   return validResult();
@@ -251,7 +260,9 @@ export function validateGetMessagesParams(params: any): ValidationResult {
   // Validate address pattern (optional)
   if (params.addressPattern !== undefined) {
     if (typeof params.addressPattern !== 'string') {
-      return invalidResult(ValidationErrors.invalidParameter('addressPattern', params.addressPattern, 'string'));
+      return invalidResult(
+        ValidationErrors.invalidParameter('addressPattern', params.addressPattern, 'string')
+      );
     }
     const patternResult = validateAddressPattern(params.addressPattern);
     if (!patternResult.isValid) {

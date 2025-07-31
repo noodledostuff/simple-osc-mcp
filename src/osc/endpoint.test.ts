@@ -16,7 +16,7 @@ describe('OSCEndpoint', () => {
   const testConfig: OSCEndpointConfig = {
     port: 8000,
     bufferSize: 100,
-    addressFilters: ['/test/*']
+    addressFilters: ['/test/*'],
   };
 
   beforeEach(() => {
@@ -25,11 +25,11 @@ describe('OSCEndpoint', () => {
       bind: jest.fn(),
       close: jest.fn(),
       on: jest.fn(),
-      removeAllListeners: jest.fn()
+      removeAllListeners: jest.fn(),
     };
-    
+
     mockCreateSocket.mockReturnValue(mockSocket);
-    
+
     // Create endpoint
     endpoint = createOSCEndpoint('test-endpoint', testConfig);
   });
@@ -41,7 +41,7 @@ describe('OSCEndpoint', () => {
   describe('constructor', () => {
     it('should create endpoint with valid configuration', () => {
       const status = endpoint.getStatus();
-      
+
       expect(status.id).toBe('test-endpoint');
       expect(status.port).toBe(8000);
       expect(status.bufferSize).toBe(100);
@@ -54,14 +54,14 @@ describe('OSCEndpoint', () => {
     it('should use default buffer size when not specified', () => {
       const configWithoutBuffer: OSCEndpointConfig = { port: 8001 };
       const endpointWithDefaults = createOSCEndpoint('test-defaults', configWithoutBuffer);
-      
+
       expect(endpointWithDefaults.getStatus().bufferSize).toBe(1000);
     });
 
     it('should use empty address filters when not specified', () => {
       const configWithoutFilters: OSCEndpointConfig = { port: 8002 };
       const endpointWithDefaults = createOSCEndpoint('test-no-filters', configWithoutFilters);
-      
+
       expect(endpointWithDefaults.getStatus().addressFilters).toEqual([]);
     });
 
@@ -117,21 +117,23 @@ describe('OSCEndpoint', () => {
       await endpoint.startListening();
 
       await expect(endpoint.startListening()).rejects.toThrow(
-        'Endpoint test-endpoint is already listening'
+        "Endpoint 'test-endpoint' is already active and listening"
       );
     });
 
     it('should handle socket errors during startup', async () => {
       const testError = new Error('EADDRINUSE: Address already in use');
-      
+
       // Set up error handler to capture the error
       const errorHandler = jest.fn();
       endpoint.on('error', errorHandler);
-      
+
       mockSocket.bind.mockImplementation(() => {
         // Simulate socket error during bind
         setTimeout(() => {
-          const errorCallback = mockSocket.on.mock.calls.find((call: any) => call[0] === 'error')?.[1];
+          const errorCallback = mockSocket.on.mock.calls.find(
+            (call: any) => call[0] === 'error'
+          )?.[1];
           if (errorCallback) {
             errorCallback(testError);
           }
@@ -179,7 +181,7 @@ describe('OSCEndpoint', () => {
 
     it('should handle stop when not started', async () => {
       const stoppedEndpoint = createOSCEndpoint('stopped-test', { port: 8003 });
-      
+
       await stoppedEndpoint.stopListening(); // Should not throw
       expect(stoppedEndpoint.getStatus().status).toBe('stopped');
     });
@@ -192,9 +194,9 @@ describe('OSCEndpoint', () => {
       mockSocket.bind.mockImplementation((_port: number, callback: () => void) => {
         setTimeout(callback, 0);
       });
-      
+
       await endpoint.startListening();
-      
+
       // Get the message handler that was registered
       messageHandler = mockSocket.on.mock.calls.find((call: any) => call[0] === 'message')[1];
     });
@@ -205,16 +207,29 @@ describe('OSCEndpoint', () => {
 
       // Create a simple OSC message buffer: "/test\0\0\0,f\0\0A\x88\0\0" (address + type tags + float 17.0)
       const oscMessage = Buffer.from([
-        0x2F, 0x74, 0x65, 0x73, 0x74, 0x00, 0x00, 0x00, // "/test\0\0\0"
-        0x2C, 0x66, 0x00, 0x00,                         // ",f\0\0"
-        0x41, 0x88, 0x00, 0x00                          // float 17.0
+        0x2f,
+        0x74,
+        0x65,
+        0x73,
+        0x74,
+        0x00,
+        0x00,
+        0x00, // "/test\0\0\0"
+        0x2c,
+        0x66,
+        0x00,
+        0x00, // ",f\0\0"
+        0x41,
+        0x88,
+        0x00,
+        0x00, // float 17.0
       ]);
 
       const rinfo = {
         address: '192.168.1.100',
         port: 57120,
         family: 'IPv4',
-        size: oscMessage.length
+        size: oscMessage.length,
       };
 
       messageHandler(oscMessage, rinfo);
@@ -225,7 +240,7 @@ describe('OSCEndpoint', () => {
           typeTags: 'f',
           arguments: [17.0],
           sourceIp: '192.168.1.100',
-          sourcePort: 57120
+          sourcePort: 57120,
         })
       );
 
@@ -237,7 +252,7 @@ describe('OSCEndpoint', () => {
       endpoint.on('error', errorHandler);
 
       // Invalid OSC message (too short)
-      const invalidMessage = Buffer.from([0x2F, 0x74]);
+      const invalidMessage = Buffer.from([0x2f, 0x74]);
       const rinfo = { address: '192.168.1.100', port: 57120, family: 'IPv4', size: 2 };
 
       messageHandler(invalidMessage, rinfo);
@@ -245,7 +260,7 @@ describe('OSCEndpoint', () => {
       expect(errorHandler).toHaveBeenCalledWith(
         expect.objectContaining({
           code: ErrorCode.INVALID_OSC_MESSAGE,
-          message: expect.stringContaining('OSC message too short')
+          message: expect.stringContaining('OSC message too short'),
         })
       );
 
@@ -259,15 +274,14 @@ describe('OSCEndpoint', () => {
       endpoint.on('message', messageEventHandler);
 
       // Send invalid message
-      const invalidMessage = Buffer.from([0x2F, 0x74]);
+      const invalidMessage = Buffer.from([0x2f, 0x74]);
       const rinfo1 = { address: '192.168.1.100', port: 57120, family: 'IPv4', size: 2 };
       messageHandler(invalidMessage, rinfo1);
 
       // Send valid message
       const validMessage = Buffer.from([
-        0x2F, 0x74, 0x65, 0x73, 0x74, 0x00, 0x00, 0x00,
-        0x2C, 0x66, 0x00, 0x00,
-        0x41, 0x88, 0x00, 0x00
+        0x2f, 0x74, 0x65, 0x73, 0x74, 0x00, 0x00, 0x00, 0x2c, 0x66, 0x00, 0x00, 0x41, 0x88, 0x00,
+        0x00,
       ]);
       const rinfo2 = { address: '192.168.1.100', port: 57120, family: 'IPv4', size: 16 };
       messageHandler(validMessage, rinfo2);
@@ -303,11 +317,11 @@ describe('OSCEndpoint', () => {
       expect(errorEventHandler).toHaveBeenCalledWith(
         expect.objectContaining({
           code: ErrorCode.PORT_IN_USE,
-          message: 'Port 8000 is already in use',
+          message: 'Port 8000 is already in use. Please try a different port.',
           details: expect.objectContaining({
             port: 8000,
-            suggestedPorts: [8001, 8002, 8003]
-          })
+            suggestedPorts: [8001, 8002, 8003],
+          }),
         })
       );
     });
@@ -332,7 +346,8 @@ describe('OSCEndpoint', () => {
       expect(errorEventHandler).toHaveBeenCalledWith(
         expect.objectContaining({
           code: ErrorCode.PERMISSION_DENIED,
-          message: 'Permission denied to bind to port 8000'
+          message:
+            'Permission denied to bind to port 8000. Try using a port number above 1024 or run with appropriate privileges.',
         })
       );
     });
@@ -357,7 +372,7 @@ describe('OSCEndpoint', () => {
       expect(errorEventHandler).toHaveBeenCalledWith(
         expect.objectContaining({
           code: ErrorCode.NETWORK_ERROR,
-          message: 'Network error on endpoint test-endpoint: Some network error'
+          message: 'Network error: Network error on endpoint test-endpoint: Some network error',
         })
       );
     });
@@ -378,14 +393,14 @@ describe('OSCEndpoint', () => {
       mockSocket.bind.mockImplementation((_port: number, callback: () => void) => {
         setTimeout(callback, 0);
       });
-      
+
       await endpoint.startListening();
       expect(endpoint.isActive()).toBe(true);
 
       mockSocket.close.mockImplementation((callback: () => void) => {
         setTimeout(callback, 0);
       });
-      
+
       await endpoint.stopListening();
       expect(endpoint.isActive()).toBe(false);
     });
@@ -403,7 +418,7 @@ describe('OSCEndpoint', () => {
       mockSocket.bind.mockImplementation((_port: number, callback: () => void) => {
         setTimeout(callback, 0);
       });
-      
+
       await endpoint.startListening();
     });
 
@@ -411,7 +426,7 @@ describe('OSCEndpoint', () => {
       // Create endpoint with address filter
       const filteredEndpoint = createOSCEndpoint('filtered', {
         port: 8004,
-        addressFilters: ['/synth/*']
+        addressFilters: ['/synth/*'],
       });
 
       // Mock socket for filtered endpoint
@@ -419,25 +434,61 @@ describe('OSCEndpoint', () => {
         bind: jest.fn((_port: number, callback: () => void) => setTimeout(callback, 0)),
         close: jest.fn(),
         on: jest.fn(),
-        removeAllListeners: jest.fn()
+        removeAllListeners: jest.fn(),
       } as any;
       mockCreateSocket.mockReturnValue(filteredMockSocket);
 
       return filteredEndpoint.startListening().then(() => {
-        const filteredMessageHandler = filteredMockSocket.on.mock.calls.find((call: any) => call[0] === 'message')[1];
+        const filteredMessageHandler = filteredMockSocket.on.mock.calls.find(
+          (call: any) => call[0] === 'message'
+        )[1];
 
         // Message that matches filter
         const matchingMessage = Buffer.from([
-          0x2F, 0x73, 0x79, 0x6E, 0x74, 0x68, 0x2F, 0x66, 0x72, 0x65, 0x71, 0x00, // "/synth/freq\0"
-          0x2C, 0x66, 0x00, 0x00,                                                   // ",f\0\0"
-          0x41, 0x88, 0x00, 0x00                                                    // float 17.0
+          0x2f,
+          0x73,
+          0x79,
+          0x6e,
+          0x74,
+          0x68,
+          0x2f,
+          0x66,
+          0x72,
+          0x65,
+          0x71,
+          0x00, // "/synth/freq\0"
+          0x2c,
+          0x66,
+          0x00,
+          0x00, // ",f\0\0"
+          0x41,
+          0x88,
+          0x00,
+          0x00, // float 17.0
         ]);
 
         // Message that doesn't match filter
         const nonMatchingMessage = Buffer.from([
-          0x2F, 0x64, 0x72, 0x75, 0x6D, 0x2F, 0x6B, 0x69, 0x63, 0x6B, 0x00, 0x00, // "/drum/kick\0\0"
-          0x2C, 0x66, 0x00, 0x00,                                                   // ",f\0\0"
-          0x42, 0x20, 0x00, 0x00                                                    // float 40.0
+          0x2f,
+          0x64,
+          0x72,
+          0x75,
+          0x6d,
+          0x2f,
+          0x6b,
+          0x69,
+          0x63,
+          0x6b,
+          0x00,
+          0x00, // "/drum/kick\0\0"
+          0x2c,
+          0x66,
+          0x00,
+          0x00, // ",f\0\0"
+          0x42,
+          0x20,
+          0x00,
+          0x00, // float 40.0
         ]);
 
         const rinfo = { address: '192.168.1.100', port: 57120, family: 'IPv4', size: 16 };

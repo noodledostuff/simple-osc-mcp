@@ -33,31 +33,31 @@ function parseArguments(): ServerConfig {
     debug: false,
     help: false,
     version: false,
-    logLevel: 'error'
+    logLevel: 'error',
   };
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    
+
     if (!arg) continue;
-    
+
     switch (arg) {
       case '--debug':
       case '-d':
         config.debug = true;
         config.logLevel = 'debug';
         break;
-        
+
       case '--help':
       case '-h':
         config.help = true;
         break;
-        
+
       case '--version':
       case '-v':
         config.version = true;
         break;
-        
+
       case '--log-level':
         const nextArg = args[i + 1];
         if (nextArg && ['error', 'warn', 'info', 'debug'].includes(nextArg)) {
@@ -68,7 +68,7 @@ function parseArguments(): ServerConfig {
           process.exit(1);
         }
         break;
-        
+
       default:
         if (arg.startsWith('-')) {
           console.error(`Unknown option: ${arg}`);
@@ -212,7 +212,7 @@ function setupShutdownHandlers(server: OSCMCPServer): void {
 
       await server.shutdown();
       clearTimeout(shutdownTimeout);
-      
+
       console.error('OSC MCP Server shut down successfully');
       process.exit(0);
     } catch (error) {
@@ -224,9 +224,9 @@ function setupShutdownHandlers(server: OSCMCPServer): void {
   // Handle various shutdown signals
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  
+
   // Handle uncaught exceptions and unhandled rejections
-  process.on('uncaughtException', (error) => {
+  process.on('uncaughtException', error => {
     console.error('Uncaught exception:', error);
     gracefulShutdown('uncaughtException').catch(() => process.exit(1));
   });
@@ -242,7 +242,7 @@ function setupShutdownHandlers(server: OSCMCPServer): void {
     gracefulShutdown('stdin-close').catch(() => process.exit(1));
   });
 
-  process.stdin.on('error', (error) => {
+  process.stdin.on('error', error => {
     console.error('Stdin error:', error);
     gracefulShutdown('stdin-error').catch(() => process.exit(1));
   });
@@ -255,14 +255,14 @@ function validateNodeVersion(): void {
   const nodeVersion = process.version;
   const versionParts = nodeVersion.slice(1).split('.');
   const majorVersionStr = versionParts[0];
-  
+
   if (!majorVersionStr) {
     console.error('Unable to parse Node.js version');
     process.exit(1);
   }
-  
+
   const majorVersion = parseInt(majorVersionStr);
-  
+
   if (majorVersion < 18) {
     console.error(`Node.js version ${nodeVersion} is not supported.`);
     console.error('OSC MCP Server requires Node.js 18.0.0 or higher.');
@@ -276,7 +276,7 @@ function validateNodeVersion(): void {
  */
 export async function main(): Promise<void> {
   let config: ServerConfig | undefined;
-  
+
   try {
     // Validate Node.js version first
     validateNodeVersion();
@@ -314,23 +314,22 @@ export async function main(): Promise<void> {
     // Start the server
     console.debug('Initializing MCP server with stdio transport...');
     await server.start();
-    
+
     console.error('OSC MCP Server started successfully');
     console.debug('Server is ready to accept MCP requests via stdio transport');
-    
+
     // Keep the process alive - the server will handle stdio communication
     // No need for additional event loop management as MCP handles this
-
   } catch (error) {
     console.error('Failed to start OSC MCP Server:', error);
-    
+
     if (error instanceof Error) {
       console.error('Error details:', error.message);
       if (process.env['NODE_ENV'] === 'development' || config?.debug) {
         console.error('Stack trace:', error.stack);
       }
     }
-    
+
     process.exit(1);
   }
 }
