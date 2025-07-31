@@ -58,7 +58,7 @@ function parseArguments(): ServerConfig {
         config.version = true;
         break;
 
-      case '--log-level':
+      case '--log-level': {
         const nextArg = args[i + 1];
         if (nextArg && ['error', 'warn', 'info', 'debug'].includes(nextArg)) {
           config.logLevel = nextArg as ServerConfig['logLevel'];
@@ -68,6 +68,7 @@ function parseArguments(): ServerConfig {
           process.exit(1);
         }
         break;
+      }
 
       default:
         if (arg.startsWith('-')) {
@@ -136,7 +137,7 @@ function showVersion(): void {
     console.log(`OSC MCP Server v${packageJson.version}`);
     console.log(`Node.js ${process.version}`);
     console.log(`Platform: ${process.platform} ${process.arch}`);
-  } catch (error) {
+  } catch {
     console.log('OSC MCP Server v1.0.0');
     console.log(`Node.js ${process.version}`);
     console.log(`Platform: ${process.platform} ${process.arch}`);

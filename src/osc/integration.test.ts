@@ -63,29 +63,37 @@ class OSCTestSender {
       const typeTag = typeTags[i];
 
       switch (typeTag) {
-        case 'i': // int32
+        case 'i': {
+          // int32
           const intBuffer = Buffer.allocUnsafe(4);
           intBuffer.writeInt32BE(arg, 0);
           argBuffers.push(intBuffer);
           break;
+        }
 
-        case 'f': // float32
+        case 'f': {
+          // float32
           const floatBuffer = Buffer.allocUnsafe(4);
           floatBuffer.writeFloatBE(arg, 0);
           argBuffers.push(floatBuffer);
           break;
+        }
 
-        case 's': // string
+        case 's': {
+          // string
           const stringBuffer = Buffer.from(arg + '\0');
           argBuffers.push(this.padToMultipleOf4(stringBuffer));
           break;
+        }
 
-        case 'b': // blob
+        case 'b': {
+          // blob
           const blobSize = Buffer.allocUnsafe(4);
           blobSize.writeInt32BE(arg.length, 0);
           const blobData = this.padToMultipleOf4(arg);
           argBuffers.push(Buffer.concat([blobSize, blobData]));
           break;
+        }
       }
     }
 
@@ -212,7 +220,7 @@ describe('OSC Integration Tests with Real Communication', () => {
 
     try {
       await oscManager.shutdown();
-    } catch (error) {
+    } catch (_error) {
       // Ignore cleanup errors
     }
   });

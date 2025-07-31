@@ -400,7 +400,7 @@ describe('Error Handling Integration Tests', () => {
     try {
       const oscManager = server.getOSCManager();
       await oscManager.shutdown();
-    } catch (error) {
+    } catch (_error) {
       // Ignore cleanup errors
     }
   });
