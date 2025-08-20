@@ -1,7 +1,7 @@
-# OSC MCP Server
+# Simple OSC MCP Server
 
-[![CI/CD Pipeline](https://github.com/noodledostuff/osc-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/noodledostuff/osc-mcp-server/actions/workflows/ci.yml)
-[![Security Scan](https://github.com/noodledostuff/osc-mcp-server/actions/workflows/security.yml/badge.svg)](https://github.com/noodledostuff/osc-mcp-server/actions/workflows/security.yml)
+[![CI/CD Pipeline](https://github.com/noodledostuff/simple-osc-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/noodledostuff/simple-osc-mcp/actions/workflows/ci.yml)
+[![Security Scan](https://github.com/noodledostuff/simple-osc-mcp/actions/workflows/security.yml/badge.svg)](https://github.com/noodledostuff/simple-osc-mcp/actions/workflows/security.yml)
 [![npm version](https://badge.fury.io/js/osc-mcp-server.svg)](https://badge.fury.io/js/osc-mcp-server)
 
 A Model Context Protocol (MCP) server that enables AI agents to create OSC (Open Sound Control) endpoints and receive OSC messages. This server provides a bridge between AI agents and OSC-enabled applications like SuperCollider, Max/MSP, TouchOSC, and other music/audio software.
